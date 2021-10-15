@@ -34,7 +34,7 @@
   "devDependencies": {
     "@jakejarvis/eslint-config": "*",
     "eslint": "^8.0.0",
-    "mocha": "^9.1.2"
+    "mocha": "^9.1.3"
   },
   "scripts": {
     "postinstall": "node lib/install.js",
