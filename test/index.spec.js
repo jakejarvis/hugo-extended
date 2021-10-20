@@ -1,8 +1,8 @@
 /* eslint-env node, mocha */
-import fs from "fs";
 import path from "path";
 import { execFile } from "child_process";
 import assert from "assert";
+import rimraf from "rimraf";
 import hugo from "../index.js";
 import { getBinPath } from "../lib/utils.js";
 
@@ -23,7 +23,7 @@ it("Hugo doesn't exist, install it instead of throwing an error", async function
   this.timeout(30000); // increase timeout to an excessive 30 seconds for CI
 
   // delete binary to ensure it's auto-reinstalled
-  fs.rmSync(path.dirname(getBinPath()), { recursive: true });
+  rimraf.sync(path.dirname(getBinPath()));
 
   const hugoPath = await hugo();
 
