@@ -53,9 +53,9 @@
   integrity sha512-ZnQMnLV4e7hDlUvw8H+U8ASL02SS2Gn6+9Ac3wGGLIe7+je2AeAOxPY+izIPJDfFDb7eDjev0Us8MO1iFRN8hA==
 
 "@jakejarvis/eslint-config@*":
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/@jakejarvis/eslint-config/-/eslint-config-2.0.0.tgz#4eafa5fd14345ad11f6f014bb4f3146b104054bc"
-  integrity sha512-+HKZFon1KqE0lazw+fT18dAWFsea/TspLFflS6jlXMhd5AAj9YfRbJi/linWhSRmhzOwAIa19XX9PHMA8y+e4g==
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/@jakejarvis/eslint-config/-/eslint-config-3.0.0.tgz#383491bde85ed3ff539d4aca747206dd07a6f033"
+  integrity sha512-HrPBEsV9/P63xOsVE3dZlIlmGYrhRcm2k8W3TriJJhpQ7wJMKdQoq/TpRz4jvUsNNca4pGYEkpZhxH8uAqlRiQ==
 
 "@nodelib/fs.scandir@2.1.5":
   version "2.1.5"
