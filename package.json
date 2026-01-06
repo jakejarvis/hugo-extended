@@ -31,6 +31,10 @@
       "types": "./dist/hugo.d.mts",
       "import": "./dist/hugo.mjs",
       "default": "./dist/hugo.mjs"
+    },
+    "./types": {
+      "types": "./dist/types.d.mts",
+      "default": "./dist/types.mjs"
     }
   },
   "files": [
@@ -43,7 +47,7 @@
     "lint": "biome check",
     "lint:fix": "biome check --write",
     "typecheck": "tsc --noEmit",
-    "postinstall": "node dist/postinstall.mjs",
+    "postinstall": "node -e \"try{const m=await import('./dist/lib/install.mjs');await m.default()}catch{}\"",
     "prepublishOnly": "npm run gen:types && npm run build"
   },
   "dependencies": {

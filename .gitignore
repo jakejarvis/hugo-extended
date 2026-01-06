@@ -4,3 +4,4 @@ npm-debug.log*
 /dist/
 /bin/
 mysite/
+src/_flags.json
