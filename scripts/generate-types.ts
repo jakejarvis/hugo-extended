@@ -467,6 +467,34 @@ async function getHelp(bin: string, args: string[]) {
 }
 
 /**
+ * Get help text for a command, using the appropriate method.
+ * Some commands (like `new`) redirect `--help` to a default subcommand,
+ * so we use `help <command>` instead to see the parent command structure.
+ *
+ * @param bin - Absolute path to the Hugo executable.
+ * @param tokens - Command path tokens (e.g. `["new"]`).
+ * @returns Help output showing subcommands if they exist.
+ */
+async function getCommandHelp(bin: string, tokens: string[]) {
+  if (tokens.length === 0) {
+    return getHelp(bin, ["--help"]);
+  }
+
+  // First try using `help <command>` to see if subcommands are listed
+  const helpArgs = ["help", ...tokens];
+  const helpOutput = await getHelp(bin, helpArgs);
+
+  // If we see "Available Commands:" in the output, use this version
+  if (helpOutput.includes("Available Commands:")) {
+    return helpOutput;
+  }
+
+  // Otherwise fall back to the standard `<command> --help`
+  const stdArgs = [...tokens, "--help"];
+  return getHelp(bin, stdArgs);
+}
+
+/**
  * Main entry point: discovers the Hugo command tree, parses flags, and emits:
  * - `src/types.ts` (types/interfaces)
  * - `src/hugo.spec.json` (runtime spec for argv building)
@@ -487,8 +515,7 @@ async function run() {
     if (visited.has(key)) continue;
     visited.add(key);
 
-    const args = tokens.length ? [...tokens, "--help"] : ["--help"];
-    const helpText = await getHelp(bin, args);
+    const helpText = await getCommandHelp(bin, tokens);
 
     // Root is used only for discovery (naming convenience).
     const pathTokens = tokens.length ? tokens : ["root"];

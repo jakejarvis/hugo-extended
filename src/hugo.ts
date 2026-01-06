@@ -265,7 +265,16 @@ export const hugo = {
   },
 
   /** Create new content */
-  new: (options?: HugoOptionsFor<"new">) => exec("new", options),
+  new: Object.assign(
+    (options?: HugoOptionsFor<"new">) => exec("new", options),
+    {
+      content: (options?: HugoOptionsFor<"new content">) =>
+        exec("new content", options),
+      site: (options?: HugoOptionsFor<"new site">) => exec("new site", options),
+      theme: (options?: HugoOptionsFor<"new theme">) =>
+        exec("new theme", options),
+    },
+  ),
 
   /** Start the Hugo development server */
   server: (options?: HugoOptionsFor<"server">) => exec("server", options),
