@@ -28,7 +28,5 @@ jobs:
       run: npm run lint && npm run typecheck
     - name: Build
       run: npm run build
-    - name: Print Hugo version
-      run: ./dist/cli.mjs version
     - name: Publish
       run: npm publish

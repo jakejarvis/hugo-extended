@@ -38,7 +38,8 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "postinstall.js"
   ],
   "scripts": {
     "build": "tsdown",
@@ -47,7 +48,7 @@
     "lint": "biome check",
     "lint:fix": "biome check --write",
     "typecheck": "tsc --noEmit",
-    "postinstall": "node -e \"try{const m=await import('./dist/lib/install.mjs');await m.default()}catch{}\"",
+    "postinstall": "node postinstall.js",
     "prepublishOnly": "npm run generate-types && npm run build"
   },
   "dependencies": {

@@ -36,8 +36,8 @@ jobs:
     - name: Build
       run: npm run build
     - name: Print Hugo version
-      run: ./dist/cli.mjs version
+      run: node dist/cli.mjs version
     - name: Create new site
-      run: ./dist/cli.mjs new site mysite
+      run: node dist/cli.mjs new site mysite
     - name: Build site
-      run: ./dist/cli.mjs --source mysite/ --minify --enableGitInfo --logLevel info
+      run: node dist/cli.mjs --source mysite/ --minify --enableGitInfo --logLevel info
