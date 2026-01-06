@@ -1,9 +1,9 @@
 import { spawn } from "node:child_process";
 import logSymbols from "log-symbols";
+import type { HugoCommand, HugoOptionsFor } from "./generated/types";
 import { buildArgs } from "./lib/args";
 import install from "./lib/install";
 import { doesBinExist, getBinPath } from "./lib/utils";
-import type { HugoCommand, HugoOptionsFor } from "./types";
 
 /**
  * Gets the path to the Hugo binary, automatically installing it if it's missing.
@@ -281,4 +281,4 @@ const hugoCompat = getHugoBinary;
 export default Object.assign(hugoCompat, hugo);
 
 // Re-export types for convenience
-export type { HugoCommand, HugoOptionsFor } from "./types";
+export type { HugoCommand, HugoOptionsFor } from "./generated/types";

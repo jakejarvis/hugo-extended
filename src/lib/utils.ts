@@ -51,13 +51,10 @@ export function getBinFilename(): string {
 /**
  * Gets the absolute path to the installed Hugo binary.
  *
- * @returns The absolute path to hugo binary:
- *   - macOS: "/usr/local/bin/hugo" (system-wide installation)
- *   - Other platforms: "./bin/hugo" or "./bin/hugo.exe" (local to package)
+ * @returns The absolute path to hugo binary in the local bin directory.
+ *   On macOS, this is a symlink to "/usr/local/bin/hugo".
  */
 export function getBinPath(): string {
-  if (process.platform === "darwin") return "/usr/local/bin/hugo";
-
   return path.join(__dirname, "..", "..", "bin", getBinFilename());
 }
 

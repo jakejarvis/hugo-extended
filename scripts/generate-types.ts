@@ -3,9 +3,9 @@ import path from "node:path";
 import { x } from "tinyexec";
 import hugo from "../src/hugo";
 
-const OUT_DIR = "src";
+const OUT_DIR = "src/generated";
 const HUGO_TYPES_FILE = "types.ts";
-const HUGO_FLAGS_JSON_FILE = "_flags.json";
+const HUGO_FLAGS_JSON_FILE = "flags.json";
 
 /**
  * Normalized flag "kinds" that we map Hugo/Cobra type tokens into.

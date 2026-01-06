@@ -33,8 +33,8 @@
       "default": "./dist/hugo.mjs"
     },
     "./types": {
-      "types": "./dist/types.d.mts",
-      "default": "./dist/types.mjs"
+      "types": "./dist/generated/types.d.mts",
+      "default": "./dist/generated/types.mjs"
     }
   },
   "files": [
@@ -43,12 +43,12 @@
   "scripts": {
     "build": "tsdown",
     "dev": "tsdown --watch",
-    "gen:types": "tsx scripts/generate-types.ts",
+    "generate-types": "tsx scripts/generate-types.ts",
     "lint": "biome check",
     "lint:fix": "biome check --write",
     "typecheck": "tsc --noEmit",
     "postinstall": "node -e \"try{const m=await import('./dist/lib/install.mjs');await m.default()}catch{}\"",
-    "prepublishOnly": "npm run gen:types && npm run build"
+    "prepublishOnly": "npm run generate-types && npm run build"
   },
   "dependencies": {
     "adm-zip": "^0.5.16",

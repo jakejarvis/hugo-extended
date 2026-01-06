@@ -43,7 +43,7 @@ let cachedSpec: HugoSpec | null = null;
 function loadSpec(): HugoSpec {
   if (cachedSpec) return cachedSpec;
 
-  const specPath = path.join(__dirname, "..", "_flags.json");
+  const specPath = path.join(__dirname, "..", "generated", "flags.json");
   const specText = fs.readFileSync(specPath, "utf8");
   cachedSpec = JSON.parse(specText) as HugoSpec;
   return cachedSpec;

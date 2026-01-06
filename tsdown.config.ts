@@ -8,5 +8,5 @@ export default defineConfig({
     resolve: true,
   },
   unbundle: true,
-  copy: ["src/_flags.json"],
+  copy: ["src/generated"],
 });

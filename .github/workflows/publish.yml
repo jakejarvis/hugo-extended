@@ -20,6 +20,15 @@ jobs:
         node-version: "24"
         registry-url: "https://registry.npmjs.org"
     - run: npm install -g npm@latest
-    - run: npm ci
-    - run: npm run lint
-    - run: npm publish
+    - name: Install dependencies
+      run: npm ci
+    - name: Generate types
+      run: npm run generate-types
+    - name: Lint and check types
+      run: npm run lint && npm run typecheck
+    - name: Build
+      run: npm run build
+    - name: Print Hugo version
+      run: ./dist/cli.mjs version
+    - name: Publish
+      run: npm publish

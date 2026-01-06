@@ -1,7 +1,7 @@
 node_modules/
 npm-debug.log*
 *.tsbuildinfo
-/dist/
-/bin/
+dist/
+bin/
+src/generated/
 mysite/
-src/_flags.json

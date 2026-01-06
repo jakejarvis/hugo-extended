@@ -28,8 +28,10 @@ jobs:
     - uses: actions/setup-node@v6
       with:
         node-version: ${{ matrix.node }}
-    - name: Install
+    - name: Install dependencies
       run: npm ci
+    - name: Generate types
+      run: npm run generate-types
     - name: Lint and check types
       run: npm run lint && npm run typecheck
     - name: Build

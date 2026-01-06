@@ -155,6 +155,16 @@ async function install(): Promise<string> {
 
       // Cleanup downloaded pkg
       fs.unlinkSync(downloadPath);
+
+      // Create symlink in local bin dir for consistency with other platforms
+      const symlinkPath = path.join(binDir, binFile);
+      if (
+        fs.existsSync(symlinkPath) ||
+        fs.lstatSync(symlinkPath, { throwIfNoEntry: false })
+      ) {
+        fs.unlinkSync(symlinkPath);
+      }
+      fs.symlinkSync("/usr/local/bin/hugo", symlinkPath);
     } else {
       console.info(`${logSymbols.info} Extracting...`);
 
@@ -182,15 +192,10 @@ async function install(): Promise<string> {
 
     console.info(`${logSymbols.success} Hugo installed successfully!`);
 
-    // Check version
-    if (process.platform === "darwin") {
-      console.info(getBinVersion("/usr/local/bin/hugo"));
-      return "/usr/local/bin/hugo";
-    } else {
-      const binPath = path.join(binDir, binFile);
-      console.info(getBinVersion(binPath));
-      return binPath;
-    }
+    // Check version and return path
+    const binPath = path.join(binDir, binFile);
+    console.info(getBinVersion(binPath));
+    return binPath;
   } catch (error) {
     console.error(`${logSymbols.error} Hugo installation failed. :(`);
     throw error;

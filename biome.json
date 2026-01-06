@@ -7,7 +7,7 @@
   },
   "files": {
     "ignoreUnknown": true,
-    "includes": ["**", "!src/types.ts", "!!**/dist"]
+    "includes": ["**", "!src/generated", "!!**/dist"]
   },
   "formatter": {
     "enabled": true,
