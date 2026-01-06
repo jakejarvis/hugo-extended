@@ -39,11 +39,12 @@
   "scripts": {
     "build": "tsdown",
     "dev": "tsdown --watch",
+    "gen:types": "tsx scripts/generate-types.ts",
     "lint": "biome check",
     "lint:fix": "biome check --write",
     "typecheck": "tsc --noEmit",
     "postinstall": "node dist/postinstall.mjs",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run gen:types && npm run build"
   },
   "dependencies": {
     "adm-zip": "^0.5.16",
@@ -56,7 +57,9 @@
     "@types/adm-zip": "^0.5.7",
     "@types/node": "^25.0.3",
     "@types/tar": "^6.1.13",
+    "tinyexec": "^1.0.2",
     "tsdown": "^0.19.0-beta.3",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.3"
   },
   "engines": {
