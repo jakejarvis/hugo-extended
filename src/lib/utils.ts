@@ -6,9 +6,16 @@ import { readPackageUpSync } from "read-package-up";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// This package's version number (should) always match the Hugo release we want.
-// We check for a `hugoVersion` field in package.json just in case it doesn't
-// match in the future (from pushing an emergency package update, etc.).
+/**
+ * Gets the Hugo version to install from package.json.
+ *
+ * This package's version number (should) always match the Hugo release we want.
+ * We check for a `hugoVersion` field in package.json just in case it doesn't
+ * match in the future (from pushing an emergency package update, etc.).
+ *
+ * @throws {Error} If package.json cannot be found
+ * @returns The version string (e.g., "0.88.1")
+ */
 export function getPkgVersion(): string {
   const result = readPackageUpSync({ cwd: __dirname });
   if (!result) {
@@ -21,31 +28,58 @@ export function getPkgVersion(): string {
   );
 }
 
-// Generate the full GitHub URL to a given release file.
+/**
+ * Generates the full GitHub URL to a Hugo release file.
+ *
+ * @param version - The Hugo version number (e.g., "0.88.1")
+ * @param filename - The release filename (e.g., "hugo_extended_0.88.1_darwin-universal.pkg")
+ * @returns The complete download URL for the release file
+ */
 export function getReleaseUrl(version: string, filename: string): string {
   return `https://github.com/gohugoio/hugo/releases/download/v${version}/${filename}`;
 }
 
-// Binary is named `hugo.exe` on Windows, and simply `hugo` otherwise.
+/**
+ * Gets the Hugo binary filename for the current platform.
+ *
+ * @returns "hugo.exe" on Windows, "hugo" on all other platforms
+ */
 export function getBinFilename(): string {
   return process.platform === "win32" ? "hugo.exe" : "hugo";
 }
 
-// Simple shortcut to ./bin/hugo[.exe] from package root.
+/**
+ * Gets the absolute path to the installed Hugo binary.
+ *
+ * @returns The absolute path to hugo binary:
+ *   - macOS: "/usr/local/bin/hugo" (system-wide installation)
+ *   - Other platforms: "./bin/hugo" or "./bin/hugo.exe" (local to package)
+ */
 export function getBinPath(): string {
   if (process.platform === "darwin") return "/usr/local/bin/hugo";
 
   return path.join(__dirname, "..", "..", "bin", getBinFilename());
 }
 
-// Returns the output of the `hugo version` command, i.e.:
-//   "hugo v0.88.1-5BC54738+extended darwin/arm64 BuildDate=..."
+/**
+ * Executes the Hugo binary and returns its version string.
+ *
+ * @param bin - The absolute path to the Hugo binary
+ * @returns The version output string (e.g., "hugo v0.88.1-5BC54738+extended darwin/arm64 BuildDate=...")
+ * @throws {Error} If the binary cannot be executed
+ */
 export function getBinVersion(bin: string): string {
   const stdout = execFileSync(bin, ["version"]);
   return stdout.toString().trim();
 }
 
-// Simply detect if the given file exists.
+/**
+ * Checks if the Hugo binary exists at the specified path.
+ *
+ * @param bin - The absolute path to check for the Hugo binary
+ * @returns `true` if the file exists, `false` if it doesn't
+ * @throws {Error} If an unexpected error occurs (other than ENOENT)
+ */
 export function doesBinExist(bin: string): boolean {
   try {
     if (fs.existsSync(bin)) {
@@ -67,9 +101,20 @@ export function doesBinExist(bin: string): boolean {
   return false;
 }
 
-// Hugo Extended supports: macOS x64 / ARM64, Linux x64 / ARM64, Windows x64.
-// All other combos fall back to vanilla Hugo. There are surely much better ways
-// to do this but this is easy to read/update. :)
+/**
+ * Determines the correct Hugo release filename for the current platform and architecture.
+ *
+ * Hugo Extended is available for:
+ * - macOS: x64 and ARM64 (universal binaries as of v0.102.0)
+ * - Linux: x64 and ARM64
+ * - Windows: x64 only
+ *
+ * Other platform/architecture combinations fall back to vanilla Hugo where available.
+ *
+ * @param version - The Hugo version number (e.g., "0.88.1")
+ * @returns The release filename if supported (e.g., "hugo_extended_0.88.1_darwin-universal.pkg"),
+ *          or `null` if the platform/architecture combination is not supported
+ */
 export function getReleaseFilename(version: string): string | null {
   const { platform, arch } = process;
 
@@ -101,12 +146,22 @@ export function getReleaseFilename(version: string): string | null {
   return filename;
 }
 
-// Simple formula for the checksums.txt file.
+/**
+ * Generates the checksums filename for a given Hugo version.
+ *
+ * @param version - The Hugo version number (e.g., "0.88.1")
+ * @returns The checksums filename (e.g., "hugo_0.88.1_checksums.txt")
+ */
 export function getChecksumFilename(version: string): string {
   return `hugo_${version}_checksums.txt`;
 }
 
-// Check if Hugo extended is being downloaded (as opposed to plain Hugo) based on the release filename.
+/**
+ * Determines if a release filename corresponds to Hugo Extended or vanilla Hugo.
+ *
+ * @param releaseFile - The release filename to check (e.g., "hugo_extended_0.88.1_darwin-universal.pkg")
+ * @returns `true` if the release is Hugo Extended, `false` if it's vanilla Hugo
+ */
 export function isExtended(releaseFile: string): boolean {
   return releaseFile.startsWith("hugo_extended_");
 }

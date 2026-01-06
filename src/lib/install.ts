@@ -20,6 +20,14 @@ import {
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+/**
+ * Downloads a file from a URL to a local destination path.
+ *
+ * @param url - The URL to download the file from
+ * @param dest - The local file path where the downloaded file will be saved
+ * @throws {Error} If the download fails or the response is invalid
+ * @returns A promise that resolves when the download is complete
+ */
 async function downloadFile(url: string, dest: string): Promise<void> {
   const response = await fetch(url);
   if (!response.ok) {
@@ -31,6 +39,18 @@ async function downloadFile(url: string, dest: string): Promise<void> {
   await pipeline(Readable.fromWeb(response.body), fs.createWriteStream(dest));
 }
 
+/**
+ * Verifies that a downloaded file matches its expected SHA-256 checksum.
+ *
+ * Downloads the checksums file from GitHub, extracts the expected checksum for the
+ * specified filename, computes the actual checksum of the local file, and compares them.
+ *
+ * @param filePath - The local path to the file to verify
+ * @param checksumUrl - The URL to the checksums file (usually checksums.txt from the release)
+ * @param filename - The name of the file to find in the checksums file
+ * @throws {Error} If checksums don't match, the checksums file can't be downloaded, or the filename isn't found
+ * @returns A promise that resolves when verification is successful
+ */
 async function verifyChecksum(
   filePath: string,
   checksumUrl: string,
@@ -64,6 +84,22 @@ async function verifyChecksum(
   }
 }
 
+/**
+ * Downloads, verifies, and installs Hugo (Extended when available) for the current platform.
+ *
+ * This function handles the complete installation process:
+ * - Determines the correct Hugo release file for the current platform and architecture
+ * - Downloads the release file and checksums from GitHub
+ * - Verifies the integrity of the downloaded file using SHA-256 checksums
+ * - Extracts or installs the binary (platform-specific):
+ *   - macOS: Uses `sudo installer` to install the .pkg file to /usr/local/bin
+ *   - Windows/Linux: Extracts the .zip or .tar.gz archive to the local bin directory
+ * - Sets appropriate file permissions on Unix-like systems
+ * - Displays the installed Hugo version
+ *
+ * @throws {Error} If the platform is unsupported, download fails, checksum doesn't match, or installation fails
+ * @returns A promise that resolves with the absolute path to the installed Hugo binary
+ */
 async function install(): Promise<string> {
   try {
     const version = getPkgVersion();

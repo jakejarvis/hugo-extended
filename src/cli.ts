@@ -1,7 +1,6 @@
 #!/usr/bin/env node
-
 import { spawn } from "node:child_process";
-import hugo from ".";
+import hugo from "./hugo";
 
 (async () => {
   const args = process.argv.slice(2);

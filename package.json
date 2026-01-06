@@ -19,18 +19,18 @@
     "access": "public"
   },
   "type": "module",
-  "main": "./dist/index.mjs",
-  "module": "./dist/index.mjs",
-  "types": "./dist/index.d.mts",
+  "main": "./dist/hugo.mjs",
+  "module": "./dist/hugo.mjs",
+  "types": "./dist/hugo.d.mts",
   "bin": {
     "hugo": "dist/cli.mjs",
     "hugo-extended": "dist/cli.mjs"
   },
   "exports": {
     ".": {
-      "types": "./dist/index.d.mts",
-      "import": "./dist/index.mjs",
-      "default": "./dist/index.mjs"
+      "types": "./dist/hugo.d.mts",
+      "import": "./dist/hugo.mjs",
+      "default": "./dist/hugo.mjs"
     }
   },
   "files": [
