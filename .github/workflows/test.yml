@@ -19,7 +19,6 @@ jobs:
         - 24
         - 22
         - 20
-        - 18
       fail-fast: false
     runs-on: ${{ matrix.os }}
     name: Node ${{ matrix.node }} on ${{ matrix.os }}
