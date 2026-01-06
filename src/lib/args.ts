@@ -88,19 +88,25 @@ function findFlag(flags: FlagSpec[], propName: string): FlagSpec | undefined {
  * 4. Returns an argv array ready to pass to child_process
  *
  * @param command - Hugo command string (e.g., "server", "build", "mod clean").
+ * @param positionalArgs - Optional array of positional arguments (e.g., paths, names).
  * @param options - Options object with camelCase property names.
  * @returns Array of command-line arguments.
  *
  * @example
- * buildArgs("server", { port: 1313, buildDrafts: true })
+ * buildArgs("server", undefined, { port: 1313, buildDrafts: true })
  * // Returns: ["server", "--port", "1313", "--build-drafts"]
  *
  * @example
- * buildArgs("build", { theme: ["a", "b"], minify: true })
+ * buildArgs("new site", ["my-site"], { format: "yaml" })
+ * // Returns: ["new", "site", "my-site", "--format", "yaml"]
+ *
+ * @example
+ * buildArgs("build", undefined, { theme: ["a", "b"], minify: true })
  * // Returns: ["build", "--theme", "a", "--theme", "b", "--minify"]
  */
 export function buildArgs(
   command: string,
+  positionalArgs?: string[],
   options?: Record<string, unknown>,
 ): string[] {
   const spec = loadSpec();
@@ -109,7 +115,12 @@ export function buildArgs(
   // Add the command tokens (e.g., "mod clean" becomes ["mod", "clean"])
   args.push(...command.split(" "));
 
-  // If no options, return just the command
+  // Add positional arguments after the command
+  if (positionalArgs && positionalArgs.length > 0) {
+    args.push(...positionalArgs);
+  }
+
+  // If no options, return command + positional args
   if (!options || Object.keys(options).length === 0) {
     return args;
   }

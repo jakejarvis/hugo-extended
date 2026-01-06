@@ -50,7 +50,8 @@ export const getHugoBinary = async (): Promise<string> => {
  * like `hugo server` or build commands where you want to see live output.
  *
  * @param command - Hugo command to execute (e.g., "server", "build", "mod clean")
- * @param options - Type-safe options object with camelCase property names
+ * @param positionalArgsOrOptions - Either positional arguments array or options object
+ * @param options - Type-safe options object (if first param is positional args)
  * @returns A promise that resolves when the command completes successfully
  * @throws {Error} If the command fails or Hugo is not available
  *
@@ -65,6 +66,9 @@ export const getHugoBinary = async (): Promise<string> => {
  *   baseURL: "http://localhost:1313"
  * });
  *
+ * // Create a new site
+ * await exec("new site", ["my-site"], { format: "yaml" });
+ *
  * // Build site for production
  * await exec("build", {
  *   minify: true,
@@ -74,10 +78,28 @@ export const getHugoBinary = async (): Promise<string> => {
  */
 export async function exec<C extends HugoCommand>(
   command: C,
+  positionalArgsOrOptions?: string[] | HugoOptionsFor<C>,
   options?: HugoOptionsFor<C>,
 ): Promise<void> {
   const bin = await getHugoBinary();
-  const args = buildArgs(command, options as Record<string, unknown>);
+
+  // Handle overloaded parameters
+  let positionalArgs: string[] | undefined;
+  let opts: HugoOptionsFor<C> | undefined;
+
+  if (Array.isArray(positionalArgsOrOptions)) {
+    positionalArgs = positionalArgsOrOptions;
+    opts = options;
+  } else {
+    positionalArgs = undefined;
+    opts = positionalArgsOrOptions;
+  }
+
+  const args = buildArgs(
+    command,
+    positionalArgs,
+    opts as Record<string, unknown>,
+  );
 
   return new Promise((resolve, reject) => {
     const child = spawn(bin, args, { stdio: "inherit" });
@@ -104,7 +126,8 @@ export async function exec<C extends HugoCommand>(
  * output programmatically, like `hugo version` or `hugo list all`.
  *
  * @param command - Hugo command to execute (e.g., "version", "list all")
- * @param options - Type-safe options object with camelCase property names
+ * @param positionalArgsOrOptions - Either positional arguments array or options object
+ * @param options - Type-safe options object (if first param is positional args)
  * @returns A promise that resolves with stdout and stderr strings
  * @throws {Error} If the command fails or Hugo is not available
  *
@@ -123,10 +146,28 @@ export async function exec<C extends HugoCommand>(
  */
 export async function execWithOutput<C extends HugoCommand>(
   command: C,
+  positionalArgsOrOptions?: string[] | HugoOptionsFor<C>,
   options?: HugoOptionsFor<C>,
 ): Promise<{ stdout: string; stderr: string }> {
   const bin = await getHugoBinary();
-  const args = buildArgs(command, options as Record<string, unknown>);
+
+  // Handle overloaded parameters
+  let positionalArgs: string[] | undefined;
+  let opts: HugoOptionsFor<C> | undefined;
+
+  if (Array.isArray(positionalArgsOrOptions)) {
+    positionalArgs = positionalArgsOrOptions;
+    opts = options;
+  } else {
+    positionalArgs = undefined;
+    opts = positionalArgsOrOptions;
+  }
+
+  const args = buildArgs(
+    command,
+    positionalArgs,
+    opts as Record<string, unknown>,
+  );
 
   return new Promise((resolve, reject) => {
     const stdoutChunks: Buffer[] = [];
@@ -266,13 +307,43 @@ export const hugo = {
 
   /** Create new content */
   new: Object.assign(
-    (options?: HugoOptionsFor<"new">) => exec("new", options),
+    (
+      pathOrOptions?: string | HugoOptionsFor<"new">,
+      options?: HugoOptionsFor<"new">,
+    ) => {
+      if (typeof pathOrOptions === "string") {
+        return exec("new", [pathOrOptions], options);
+      }
+      return exec("new", pathOrOptions);
+    },
     {
-      content: (options?: HugoOptionsFor<"new content">) =>
-        exec("new content", options),
-      site: (options?: HugoOptionsFor<"new site">) => exec("new site", options),
-      theme: (options?: HugoOptionsFor<"new theme">) =>
-        exec("new theme", options),
+      content: (
+        pathOrOptions?: string | HugoOptionsFor<"new content">,
+        options?: HugoOptionsFor<"new content">,
+      ) => {
+        if (typeof pathOrOptions === "string") {
+          return exec("new content", [pathOrOptions], options);
+        }
+        return exec("new content", pathOrOptions);
+      },
+      site: (
+        pathOrOptions?: string | HugoOptionsFor<"new site">,
+        options?: HugoOptionsFor<"new site">,
+      ) => {
+        if (typeof pathOrOptions === "string") {
+          return exec("new site", [pathOrOptions], options);
+        }
+        return exec("new site", pathOrOptions);
+      },
+      theme: (
+        nameOrOptions?: string | HugoOptionsFor<"new theme">,
+        options?: HugoOptionsFor<"new theme">,
+      ) => {
+        if (typeof nameOrOptions === "string") {
+          return exec("new theme", [nameOrOptions], options);
+        }
+        return exec("new theme", nameOrOptions);
+      },
     },
   ),
 
