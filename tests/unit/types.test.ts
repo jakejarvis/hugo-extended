@@ -3,11 +3,9 @@ import type { HugoCommand, HugoOptionsFor } from "../../src/generated/types";
 
 describe("Type Safety", () => {
   it("should have correct command types", () => {
-    expectTypeOf<HugoCommand>().toMatchTypeOf<"build">();
-    expectTypeOf<HugoCommand>().toMatchTypeOf<"server">();
-    expectTypeOf<HugoCommand>().toMatchTypeOf<"new site">();
-    expectTypeOf<HugoCommand>().toMatchTypeOf<"new theme">();
-    expectTypeOf<HugoCommand>().toMatchTypeOf<"new content">();
+    expectTypeOf<HugoCommand>().toEqualTypeOf<
+      "build" | "server" | "new site" | "new theme" | "new content"
+    >();
   });
 
   it("should map commands to correct option types", () => {

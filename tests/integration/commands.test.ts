@@ -25,14 +25,11 @@ describe("Hugo Commands Integration", () => {
   });
 
   describe("config command", () => {
-    it("should handle missing config gracefully", async () => {
-      // This will fail but should not throw unhandled errors
-      try {
-        await execWithOutput("config");
-      } catch (err) {
-        expect(err).toBeInstanceOf(Error);
-        expect((err as Error).message).toContain("exit code");
-      }
+    it("should throw an error when config is missing", async () => {
+      // Hugo config command requires a valid Hugo site with a config file
+      await expect(execWithOutput("config")).rejects.toThrow(
+        /Hugo command failed with exit code/,
+      );
     });
   });
 });
