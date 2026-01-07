@@ -1,6 +1,7 @@
 # <img src="https://raw.githubusercontent.com/gohugoio/gohugoioTheme/master/static/images/hugo-logo-wide.svg?sanitize=true" alt="Hugo" width="115"> via NPM
 
-[![npm](https://img.shields.io/npm/v/hugo-extended?color=blue&logo=npm)](https://www.npmjs.com/package/hugo-extended)
+[![NPM Version](https://img.shields.io/npm/v/hugo-extended?color=blue)](https://www.npmjs.com/package/hugo-extended)
+[![NPM Downloads](https://img.shields.io/npm/dw/hugo-extended?color=rebeccapurple)](https://www.npmjs.com/package/hugo-extended)
 [![CI status](https://github.com/jakejarvis/hugo-extended/workflows/Run%20tests/badge.svg)](https://github.com/jakejarvis/hugo-extended/actions)
 
 > Plug-and-play binary wrapper for [Hugo Extended](https://gohugo.io/), the awesomest static-site generator. Now with full TypeScript support and type-safe APIs!
@@ -31,7 +32,7 @@ If you're using Hugo's SCSS features, you'll also want:
 npm install postcss postcss-cli autoprefixer --save-dev
 ```
 
-These integrate seamlessly with Hugo's [built-in PostCSS pipes](https://gohugo.io/hugo-pipes/postcss/).
+These integrate seamlessly with Hugo's [built-in PostCSS pipes](https://gohugo.io/functions/css/postcss/).
 
 ## Usage
 
@@ -55,6 +56,34 @@ npm run dev
 ```
 
 ### Programmatic API
+
+#### Builder-style API
+
+A fluent interface where each Hugo command is a method:
+
+```typescript
+import hugo from "hugo-extended";
+
+// Start server
+await hugo.server({
+  port: 1313,
+  buildDrafts: true,
+});
+
+// Build site
+await hugo.build({
+  minify: true,
+  environment: "production",
+});
+
+// Module commands
+await hugo.mod.get();
+await hugo.mod.tidy();
+await hugo.mod.clean({ all: true });
+
+// Generate shell completions
+await hugo.completion.zsh();
+```
 
 #### Function-based API
 
@@ -83,34 +112,6 @@ console.log(stdout); // "hugo v0.140.0+extended darwin/arm64 ..."
 
 // List all content pages
 const { stdout: pages } = await execWithOutput("list all");
-```
-
-#### Builder-style API
-
-A fluent interface where each Hugo command is a method:
-
-```typescript
-import hugo from "hugo-extended";
-
-// Start server
-await hugo.server({
-  port: 1313,
-  buildDrafts: true,
-});
-
-// Build site
-await hugo.build({
-  minify: true,
-  environment: "production",
-});
-
-// Module commands
-await hugo.mod.get();
-await hugo.mod.tidy();
-await hugo.mod.clean({ all: true });
-
-// Generate shell completions
-await hugo.completion.zsh();
 ```
 
 #### Direct Binary Access
