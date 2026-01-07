@@ -64,11 +64,8 @@ async function verifyChecksum(
   // checksums file format: "sha256  filename"
   const expectedChecksum = checksums
     .split("\n")
-    .find((line) => {
-      const tokens = line.trim().split(/\s+/);
-      return tokens[tokens.length - 1] === filename;
-    })
-    ?.split(/\s+/)[0];
+    .map((line) => line.trim().split(/\s+/))
+    .find((tokens) => tokens[tokens.length - 1] === filename)?.[0];
 
   if (!expectedChecksum) {
     throw new Error(`Checksum for ${filename} not found in checksums file.`);
