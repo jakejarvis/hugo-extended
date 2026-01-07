@@ -25,11 +25,13 @@ describe("Hugo Commands Integration", () => {
   });
 
   describe("config command", () => {
-    it("should throw an error when config is missing", async () => {
-      // Hugo config command requires a valid Hugo site with a config file
-      await expect(execWithOutput("config")).rejects.toThrow(
-        /Hugo command failed with exit code/,
-      );
+    it("should return default config when no config file exists", async () => {
+      // As of Hugo v0.154.x, the config command returns default configuration
+      // even when no config file exists, rather than throwing an error
+      const { stdout } = await execWithOutput("config");
+      expect(stdout).toContain("contentdir");
+      expect(stdout).toContain("publishdir");
+      expect(stdout).toContain("defaultcontentlanguage");
     });
   });
 });

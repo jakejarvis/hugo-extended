@@ -2,7 +2,6 @@ import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { readPackageUpSync } from "read-package-up";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -17,15 +16,20 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
  * @returns The version string (e.g., "0.88.1")
  */
 export function getPkgVersion(): string {
-  const result = readPackageUpSync({ cwd: __dirname });
-  if (!result) {
-    throw new Error("Could not find package.json");
+  // Walk up from __dirname (dist/lib) to find package.json
+  const packageJsonPath = path.join(__dirname, "..", "..", "package.json");
+
+  try {
+    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
+    return (
+      (packageJson as { hugoVersion?: string; version: string }).hugoVersion ||
+      packageJson.version
+    );
+  } catch {
+    throw new Error(
+      `Could not find or read package.json at ${packageJsonPath}`,
+    );
   }
-  const { packageJson } = result;
-  return (
-    (packageJson as { hugoVersion?: string; version: string }).hugoVersion ||
-    packageJson.version
-  );
 }
 
 /**

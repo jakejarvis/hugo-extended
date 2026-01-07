@@ -23,7 +23,9 @@ describe("New Commands Integration", () => {
       await hugo.new.site(sitePath);
 
       // Check that essential directories exist
-      await expect(access(join(sitePath, "hugo.toml"))).resolves.toBeUndefined();
+      await expect(
+        access(join(sitePath, "hugo.toml")),
+      ).resolves.toBeUndefined();
       await expect(access(join(sitePath, "content"))).resolves.toBeUndefined();
       await expect(access(join(sitePath, "themes"))).resolves.toBeUndefined();
     });
@@ -32,14 +34,18 @@ describe("New Commands Integration", () => {
       const sitePath = join(tempDir, "test-site-yaml");
       await hugo.new.site(sitePath, { format: "yaml" });
 
-      await expect(access(join(sitePath, "hugo.yaml"))).resolves.toBeUndefined();
+      await expect(
+        access(join(sitePath, "hugo.yaml")),
+      ).resolves.toBeUndefined();
     });
 
     it("should create a new site with json format", async () => {
       const sitePath = join(tempDir, "test-site-json");
       await hugo.new.site(sitePath, { format: "json" });
 
-      await expect(access(join(sitePath, "hugo.json"))).resolves.toBeUndefined();
+      await expect(
+        access(join(sitePath, "hugo.json")),
+      ).resolves.toBeUndefined();
     });
 
     it("should respect force flag", async () => {
@@ -53,7 +59,9 @@ describe("New Commands Integration", () => {
       try {
         await hugo.new.site(sitePath, { force: true });
         // If it succeeds, verify the site still exists
-        await expect(access(join(sitePath, "hugo.toml"))).resolves.toBeUndefined();
+        await expect(
+          access(join(sitePath, "hugo.toml")),
+        ).resolves.toBeUndefined();
       } catch (error) {
         // If it fails, that's the current 0.154.x behavior
         expect(error).toBeDefined();
@@ -71,7 +79,9 @@ describe("New Commands Integration", () => {
 
       const themePath = join(sitePath, "themes", "test-theme");
       await expect(access(themePath)).resolves.toBeUndefined();
-      await expect(access(join(themePath, "hugo.toml"))).resolves.toBeUndefined();
+      await expect(
+        access(join(themePath, "hugo.toml")),
+      ).resolves.toBeUndefined();
     });
 
     it("should create theme with yaml format", async () => {
@@ -84,7 +94,9 @@ describe("New Commands Integration", () => {
       });
 
       const themePath = join(sitePath, "themes", "test-theme-yaml");
-      await expect(access(join(themePath, "hugo.yaml"))).resolves.toBeUndefined();
+      await expect(
+        access(join(themePath, "hugo.yaml")),
+      ).resolves.toBeUndefined();
     });
   });
 

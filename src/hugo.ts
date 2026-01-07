@@ -1,5 +1,4 @@
 import { spawn } from "node:child_process";
-import logSymbols from "log-symbols";
 import type { HugoCommand, HugoOptionsFor } from "./generated/types";
 import { buildArgs } from "./lib/args";
 import install from "./lib/install";
@@ -35,7 +34,7 @@ export const getHugoBinary = async (): Promise<string> => {
   // See: https://github.com/jakejarvis/hugo-extended/issues/81
   if (!doesBinExist(bin)) {
     // Hugo isn't there for some reason. Try re-installing.
-    console.info(`${logSymbols.info} Hugo is missing, reinstalling now...`);
+    console.info("⚠️ Hugo is missing, reinstalling now...");
     await install();
   }
 

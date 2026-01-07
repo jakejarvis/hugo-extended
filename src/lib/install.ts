@@ -6,7 +6,6 @@ import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import { fileURLToPath } from "node:url";
 import AdmZip from "adm-zip";
-import logSymbols from "log-symbols";
 import * as tar from "tar";
 import {
   getBinFilename,
@@ -115,7 +114,7 @@ async function install(): Promise<string> {
 
     if (!isExtended(releaseFile)) {
       console.warn(
-        `${logSymbols.info} Hugo Extended isn't supported on this platform, downloading vanilla Hugo instead.`,
+        "ℹ️ Hugo Extended isn't supported on this platform, downloading vanilla Hugo instead.",
       );
     }
 
@@ -129,16 +128,14 @@ async function install(): Promise<string> {
     const checksumUrl = getReleaseUrl(version, checksumFile);
     const downloadPath = path.join(binDir, releaseFile);
 
-    console.info(`${logSymbols.info} Downloading ${releaseFile}...`);
+    console.info(`☁️ Downloading ${releaseFile}...`);
     await downloadFile(releaseUrl, downloadPath);
 
-    console.info(`${logSymbols.info} Verifying checksum...`);
+    console.info("🕵️ Verifying checksum...");
     await verifyChecksum(downloadPath, checksumUrl, releaseFile);
 
     if (process.platform === "darwin") {
-      console.info(
-        `${logSymbols.info} Installing ${releaseFile} (requires sudo)...`,
-      );
+      console.info(`💾 Installing ${releaseFile} (requires sudo)...`);
       // Run MacOS installer
       const result = spawnSync(
         "sudo",
@@ -166,7 +163,7 @@ async function install(): Promise<string> {
       }
       fs.symlinkSync("/usr/local/bin/hugo", symlinkPath);
     } else {
-      console.info(`${logSymbols.info} Extracting...`);
+      console.info("📦 Extracting...");
 
       if (releaseFile.endsWith(".zip")) {
         const zip = new AdmZip(downloadPath);
@@ -190,14 +187,14 @@ async function install(): Promise<string> {
       }
     }
 
-    console.info(`${logSymbols.success} Hugo installed successfully!`);
+    console.info("🎉 Hugo installed successfully!");
 
     // Check version and return path
     const binPath = path.join(binDir, binFile);
     console.info(getBinVersion(binPath));
     return binPath;
   } catch (error) {
-    console.error(`${logSymbols.error} Hugo installation failed. :(`);
+    console.error("⛔ Hugo installation failed. :(");
     throw error;
   }
 }
