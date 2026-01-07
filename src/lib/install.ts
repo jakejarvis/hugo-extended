@@ -64,7 +64,10 @@ async function verifyChecksum(
   // checksums file format: "sha256  filename"
   const expectedChecksum = checksums
     .split("\n")
-    .find((line) => line.endsWith(filename))
+    .find((line) => {
+      const tokens = line.trim().split(/\s+/);
+      return tokens[tokens.length - 1] === filename;
+    })
     ?.split(/\s+/)[0];
 
   if (!expectedChecksum) {

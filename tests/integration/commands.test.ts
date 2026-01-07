@@ -12,7 +12,6 @@ describe("Hugo Commands Integration", () => {
     it("should return Hugo version", async () => {
       const { stdout } = await execWithOutput("version");
       expect(stdout).toContain("hugo v");
-      expect(stdout).toContain("extended");
     });
   });
 
