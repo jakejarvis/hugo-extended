@@ -1,106 +1,231 @@
-# <img src="https://raw.githubusercontent.com/gohugoio/gohugoioTheme/master/static/images/hugo-logo-wide.svg?sanitize=true" alt="Hugo" width="115"> via NPM [![npm](https://img.shields.io/npm/v/hugo-extended?color=blue&logo=npm)](https://www.npmjs.com/package/hugo-extended) [![CI status](https://github.com/jakejarvis/hugo-extended/workflows/Run%20tests/badge.svg)](https://github.com/jakejarvis/hugo-extended/actions)
+# <img src="https://raw.githubusercontent.com/gohugoio/gohugoioTheme/master/static/images/hugo-logo-wide.svg?sanitize=true" alt="Hugo" width="115"> via NPM
 
-> Plug-and-play binary wrapper for [Hugo Extended](https://gohugo.io/), the awesomest static-site generator.
+[![NPM Version](https://img.shields.io/npm/v/hugo-extended?color=blue)](https://www.npmjs.com/package/hugo-extended)
+[![NPM Downloads](https://img.shields.io/npm/dw/hugo-extended?color=rebeccapurple)](https://www.npmjs.com/package/hugo-extended)
+[![CI status](https://github.com/jakejarvis/hugo-extended/workflows/Run%20tests/badge.svg)](https://github.com/jakejarvis/hugo-extended/actions)
+
+> Plug-and-play binary wrapper for [Hugo Extended](https://gohugo.io/), the awesomest static-site generator. Now with full TypeScript support and type-safe APIs!
+
+## Features
+
+- 🚀 **Zero configuration** — Hugo binary is automatically downloaded on install
+- 📦 **Version-locked** — Package version matches Hugo version (e.g., `hugo-extended@0.140.0` = Hugo v0.140.0)
+- 🔒 **Type-safe API** — Full TypeScript support with autocomplete for all Hugo commands and flags
+- ⚡ **Multiple APIs** — Use CLI, function-based, or builder-style APIs
+- 🎯 **Extended by default** — Automatically uses Hugo Extended on supported platforms
 
 ## Installation
 
 ```sh
 npm install hugo-extended --save-dev
-# or...
+# or
 yarn add hugo-extended --dev
+# or
+pnpm add hugo-extended --save-dev
 ```
 
-`hugo-extended` defaults to the [extended version](https://gohugo.io/troubleshooting/faq/#i-get--this-feature-is-not-available-in-your-current-hugo-version) of Hugo on [supported platforms](https://github.com/gohugoio/hugo/releases), and automatically falls back to vanilla Hugo if unsupported (mainly on 32-bit systems).
+### SCSS/PostCSS Support
 
-This package's version numbers align with Hugo's — `hugo-extended@0.64.1` installs Hugo v0.64.1, for example.
-
-_Note:_ If you'll be using the SCSS features of Hugo Extended, it's probably smart to install [`postcss`](https://www.npmjs.com/package/postcss), [`postcss-cli`](https://www.npmjs.com/package/postcss-cli), and [`autoprefixer`](https://www.npmjs.com/package/autoprefixer) as devDependencies too, since they can be conveniently called via [built-in Hugo pipes](https://gohugo.io/hugo-pipes/postcss/):
+If you're using Hugo's SCSS features, you'll also want:
 
 ```sh
 npm install postcss postcss-cli autoprefixer --save-dev
-# or...
-yarn add postcss postcss-cli autoprefixer --dev
 ```
+
+These integrate seamlessly with Hugo's [built-in PostCSS pipes](https://gohugo.io/functions/css/postcss/).
 
 ## Usage
 
-The following examples simply refer to downloading and executing Hugo as a Node dependency. See the [official Hugo docs](https://gohugo.io/documentation/) for guidance on actual Hugo usage.
+### CLI Usage
 
-### via CLI / `package.json`:
-
-The `build:preview` script below is designed for [Netlify deploy previews](https://www.netlify.com/blog/2016/07/20/introducing-deploy-previews-in-netlify/), where [`$DEPLOY_PRIME_URL`](https://docs.netlify.com/configure-builds/environment-variables/#deploy-urls-and-metadata) is substituted for the base URL (usually ending in .netlify.app) of each pull request, branch, or commit preview.
+The simplest way — just run `hugo` commands directly:
 
 ```jsonc
-// package.json:
-
+// package.json
 {
-  // ...
   "scripts": {
-    "build": "hugo",
-    "build:preview": "hugo --baseURL \"${DEPLOY_PRIME_URL:-/}\" --buildDrafts --buildFuture",
-    "start": "hugo server"
-  },
-  "devDependencies": {
-    "autoprefixer": "^10.3.4",
-    "hugo-extended": "^0.88.1",
-    "postcss": "^8.3.6",
-    "postcss-cli": "^8.3.1"
+    "dev": "hugo server --buildDrafts",
+    "build": "hugo --minify",
+    "build:preview": "hugo --baseURL \"${DEPLOY_PRIME_URL:-/}\" --buildDrafts --buildFuture"
   }
+}
+```
+
+```sh
+npm run dev
+```
+
+### Programmatic API
+
+#### Builder-style API
+
+A fluent interface where each Hugo command is a method:
+
+```typescript
+import hugo from "hugo-extended";
+
+// Start server
+await hugo.server({
+  port: 1313,
+  buildDrafts: true,
+});
+
+// Build site
+await hugo.build({
+  minify: true,
+  environment: "production",
+});
+
+// Module commands
+await hugo.mod.get();
+await hugo.mod.tidy();
+await hugo.mod.clean({ all: true });
+
+// Generate shell completions
+await hugo.completion.zsh();
+```
+
+#### Function-based API
+
+Use `exec()` for commands that output to the console, or `execWithOutput()` to capture the output:
+
+```typescript
+import { exec, execWithOutput } from "hugo-extended";
+
+// Start development server with full type safety
+await exec("server", {
+  port: 1313,
+  buildDrafts: true,
+  navigateToChanged: true,
+});
+
+// Build for production
+await exec("build", {
+  minify: true,
+  cleanDestinationDir: true,
+  baseURL: "https://example.com",
+});
+
+// Capture command output
+const { stdout } = await execWithOutput("version");
+console.log(stdout); // "hugo v0.140.0+extended darwin/arm64 ..."
+
+// List all content pages
+const { stdout: pages } = await execWithOutput("list all");
+```
+
+#### Direct Binary Access
+
+For advanced use cases, get the Hugo binary path directly:
+
+```typescript
+import hugo from "hugo-extended";
+import { spawn } from "child_process";
+
+const binPath = await hugo();
+console.log(binPath); // "/usr/local/bin/hugo" or similar
+
+// Use with spawn, exec, or any process library
+spawn(binPath, ["version"], { stdio: "inherit" });
+```
+
+### Type Imports
+
+Import Hugo types for use in your own code:
+
+```typescript
+import type { HugoCommand, HugoOptionsFor, HugoServerOptions } from "hugo-extended";
+
+// Type-safe option objects
+const serverOpts: HugoServerOptions = {
+  port: 1313,
+  buildDrafts: true,
+  disableLiveReload: false,
+};
+
+// Generic helper
+function runHugo<C extends HugoCommand>(cmd: C, opts: HugoOptionsFor<C>) {
   // ...
 }
 ```
 
-```bash
-$ npm run start
+## API Reference
 
-Start building sites …
-hugo v0.88.1-5BC54738+extended darwin/amd64 BuildDate=2021-09-04T09:39:19Z VendorInfo=gohugoio
+### `exec(command, options?)`
 
-                   | EN
--------------------+------
-  Pages            |  50
-  Paginator pages  |   0
-  Non-page files   | 138
-  Static files     |  39
-  Processed images |  63
-  Aliases          |   0
-  Sitemaps         |   1
-  Cleaned          |   0
+Execute a Hugo command with inherited stdio (output goes to console).
 
-Built in 2361 ms
-Watching for changes in {archetypes,assets,content,data,layouts,package.json,static}
-Watching for config changes in config.toml
-Environment: "development"
-Serving pages from memory
-Web Server is available at http://localhost:1313/ (bind address 127.0.0.1)
+- **command** — Hugo command string (e.g., `"server"`, `"build"`, `"mod clean"`)
+- **options** — Type-safe options object (optional)
+- **Returns** — `Promise<void>`
+
+### `execWithOutput(command, options?)`
+
+Execute a Hugo command and capture output.
+
+- **command** — Hugo command string
+- **options** — Type-safe options object (optional)
+- **Returns** — `Promise<{ stdout: string; stderr: string }>`
+
+### `hugo` (default export)
+
+The default export is both callable (returns binary path) and has builder methods:
+
+```typescript
+// Get binary path (backward compatible)
+const binPath = await hugo();
+
+// Builder methods
+await hugo.build({ minify: true });
+await hugo.server({ port: 3000 });
 ```
 
-### via API:
+### Available Commands
 
-```js
-// version.js:
+All Hugo commands are fully typed with autocomplete:
 
-import hugo from "hugo-extended";
-import { execFile } from "child_process";
+| Command | Builder Method | Description |
+|---------|---------------|-------------|
+| `build` | `hugo.build()` | Build your site |
+| `server` | `hugo.server()` | Start dev server |
+| `new` | `hugo.new()` | Create new content |
+| `mod get` | `hugo.mod.get()` | Download modules |
+| `mod tidy` | `hugo.mod.tidy()` | Clean go.mod/go.sum |
+| `mod clean` | `hugo.mod.clean()` | Clean module cache |
+| `mod vendor` | `hugo.mod.vendor()` | Vendor dependencies |
+| `list all` | `hugo.list.all()` | List all content |
+| `list drafts` | `hugo.list.drafts()` | List draft content |
+| `config` | `hugo.config()` | Print configuration |
+| `version` | `hugo.version()` | Print version |
+| `env` | `hugo.env()` | Print environment |
+| ... | ... | [All Hugo commands supported](https://gohugo.io/commands/) |
 
-(async () => {
-  const binPath = await hugo();
+## Platform Support
 
-  execFile(binPath, ["version"], (error, stdout) => {
-    console.log(stdout);
-  });
-})();
+Hugo Extended is automatically used on supported platforms:
+
+| Platform | Architecture | Hugo Extended |
+|----------|-------------|---------------|
+| macOS | x64, ARM64 | ✅ |
+| Linux | x64, ARM64 | ✅ |
+| Windows | x64 | ✅ |
+| Windows | ARM64 | ❌ (vanilla Hugo) |
+| FreeBSD | x64 | ❌ (vanilla Hugo) |
+
+## Troubleshooting
+
+### Hugo binary not found
+
+If Hugo seems to disappear (rare edge case), it will be automatically reinstalled on next use. You can also manually trigger reinstallation:
+
+```sh
+npm rebuild hugo-extended
 ```
 
-```bash
-$ node version.js
-hugo v0.88.1-5BC54738+extended darwin/amd64 BuildDate=2021-09-04T09:39:19Z VendorInfo=gohugoio
-```
+### Permission issues on macOS
 
-## Examples
-
-- [jakejarvis/jarv.is](https://github.com/jakejarvis/jarv.is)
+As of [v0.153.0](https://github.com/gohugoio/hugo/releases/tag/v0.153.0), Hugo is distributed as a full installer for macOS, rather than a simple binary/executable file. This package will make its best effort to run the installer for you (which includes prompting you for `sudo` access) but this method introduces infinitely more opportunities for things to go wrong. Please [open an issue](https://github.com/jakejarvis/hugo-extended/issues/new) if you encounter any issues.
 
 ## License
 
-This project is distributed under the [MIT License](LICENSE.md). Hugo is distributed under the [Apache License 2.0](https://github.com/gohugoio/hugo/blob/master/LICENSE).
+This project is distributed under the [MIT License](LICENSE). Hugo is distributed under the [Apache License 2.0](https://github.com/gohugoio/hugo/blob/master/LICENSE).
