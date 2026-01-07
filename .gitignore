@@ -5,3 +5,6 @@ dist/
 bin/
 src/generated/
 mysite/
+coverage/
+.vitest-cache/
+*.test.mjs

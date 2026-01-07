@@ -1,9 +1,9 @@
-name: Publish to NPM
+name: Publish
 
 on:
   push:
     tags:
-    - 'v*'
+      - "v*"
 
 permissions:
   id-token: write
@@ -14,19 +14,20 @@ jobs:
     name: Publish to NPM
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v6
-    - uses: actions/setup-node@v6
-      with:
-        node-version: "24"
-        registry-url: "https://registry.npmjs.org"
-    - run: npm install -g npm@latest
-    - name: Install dependencies
-      run: npm ci
-    - name: Generate types
-      run: npm run generate-types
-    - name: Lint and check types
-      run: npm run lint && npm run typecheck
-    - name: Build
-      run: npm run build
-    - name: Publish
-      run: npm publish
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          registry-url: "https://registry.npmjs.org"
+      - name: Install dependencies
+        run: npm install -g npm@latest && npm ci
+      - name: Generate types
+        run: npm run generate-types
+      - name: Lint
+        run: npm run lint
+      - name: Type check
+        run: npm run typecheck
+      - name: Build
+        run: npm run build
+      - name: Publish
+        run: npm publish

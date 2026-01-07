@@ -44,8 +44,16 @@ function loadSpec(): HugoSpec {
   if (cachedSpec) return cachedSpec;
 
   const specPath = path.join(__dirname, "..", "generated", "flags.json");
-  const specText = fs.readFileSync(specPath, "utf8");
-  cachedSpec = JSON.parse(specText) as HugoSpec;
+  try {
+    const specText = fs.readFileSync(specPath, "utf8");
+    cachedSpec = JSON.parse(specText) as HugoSpec;
+  } catch (error) {
+    throw new Error(
+      `Failed to load Hugo spec from ${specPath}. ` +
+        `Ensure the project is built (npm run build) before use.`,
+      { cause: error },
+    );
+  }
   return cachedSpec;
 }
 
