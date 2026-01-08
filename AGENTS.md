@@ -26,8 +26,14 @@ Notes for LLM coding agents working on `hugo-extended`.
 
 - **Binary installation**: `src/lib/install.ts`
   - Downloads Hugo release assets and verifies SHA-256 checksums.
-  - **macOS**: uses `sudo installer -pkg ... -target /` (and then symlinks `bin/hugo` -> `/usr/local/bin/hugo`).
+  - **macOS v0.153.0+**: uses `sudo installer -pkg ... -target /` (and then symlinks `bin/hugo` -> `/usr/local/bin/hugo`).
+  - **macOS pre-v0.153.0**: extracts `.tar.gz` archive into `bin/` (no sudo required).
   - **non-macOS**: extracts archive into `bin/` and `chmod +x`.
+
+- **Environment variables**: `src/lib/env.ts`
+  - Centralized handling of all `HUGO_*` environment variables.
+  - Exports `getEnvConfig()` for reading parsed config, `logger` for quiet-aware logging.
+  - Exports `ENV_VAR_DOCS` for programmatic access to variable metadata.
 
 - **Postinstall**: `postinstall.js`
   - For published packages (where `dist/` exists), runs the compiled installer.
@@ -110,3 +116,29 @@ npm run test:coverage    # coverage via v8
 
 - If you touch exports in `src/hugo.ts`:
   - Remember: consumers rely on the **default export being callable** (binary path) and having builder methods attached.
+
+- If you touch environment variables (`src/lib/env.ts`):
+  - All env vars are defined in `ENV_VARS` with name, aliases, parse function, and description.
+  - Boolean env vars accept: `1`, `true`, `yes`, `on` (case-insensitive).
+  - Use `getEnvConfig()` to read config; use `logger.info/warn/error` for quiet-aware output.
+  - `postinstall.js` has its own minimal env parsing (can't import TypeScript modules).
+
+## Environment variables reference
+
+| Variable | Type | Description |
+|----------|------|-------------|
+| `HUGO_OVERRIDE_VERSION` | string | Install a different Hugo version (ignores package.json) |
+| `HUGO_NO_EXTENDED` | boolean | Force vanilla Hugo instead of Extended |
+| `HUGO_SKIP_DOWNLOAD` | boolean | Skip postinstall binary download |
+| `HUGO_BIN_PATH` | string | Use a pre-existing Hugo binary |
+| `HUGO_MIRROR_BASE_URL` | string | Custom download mirror URL |
+| `HUGO_SKIP_CHECKSUM` | boolean | Skip SHA-256 verification |
+| `HUGO_QUIET` | boolean | Suppress installation output |
+
+Some variables have aliases (e.g., `HUGO_FORCE_STANDARD` → `HUGO_NO_EXTENDED`, `HUGO_SILENT` → `HUGO_QUIET`). Check `ENV_VARS` in `src/lib/env.ts` for the full list.
+
+### Version-dependent behavior
+
+- **macOS v0.153.0+**: Hugo ships as `.pkg` installer, requires `sudo`.
+- **macOS pre-v0.153.0**: Hugo ships as `.tar.gz`, extracted to `bin/` directly.
+- The `usesMacOSPkg(version)` and `compareVersions(a, b)` utilities in `src/lib/utils.ts` handle this.

@@ -11,12 +11,32 @@ import { fileURLToPath } from "node:url";
  *
  * During development/CI (before build), the dist folder won't exist and this script will exit gracefully.
  * For published packages, the dist folder is included and installation will proceed.
+ *
+ * Environment variables:
+ * - HUGO_SKIP_DOWNLOAD: Skip installation entirely (useful for CI caching, Docker layers)
  */
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const installPath = join(__dirname, "dist", "lib", "install.mjs");
 
+/**
+ * Check if an environment variable is set to a truthy value.
+ * @param {string} name - Environment variable name
+ * @returns {boolean}
+ */
+function isEnvTruthy(name) {
+  const value = process.env[name];
+  if (!value) return false;
+  return ["1", "true", "yes", "on"].includes(value.toLowerCase().trim());
+}
+
 async function run() {
+  // Skip installation if HUGO_SKIP_DOWNLOAD is set
+  if (isEnvTruthy("HUGO_SKIP_DOWNLOAD")) {
+    console.log("Skipping Hugo installation (HUGO_SKIP_DOWNLOAD is set)");
+    process.exit(0);
+  }
+
   // Skip installation if dist folder doesn't exist (development/CI environment)
   if (!existsSync(installPath)) {
     console.log(

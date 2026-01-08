@@ -1,8 +1,9 @@
 import { spawn } from "node:child_process";
 import type { HugoCommand, HugoOptionsFor } from "./generated/types";
 import { buildArgs } from "./lib/args";
+import { getEnvConfig } from "./lib/env";
 import install from "./lib/install";
-import { doesBinExist, getBinPath } from "./lib/utils";
+import { doesBinExist, getBinPath, logger } from "./lib/utils";
 
 /**
  * Gets the path to the Hugo binary, automatically installing it if it's missing.
@@ -14,8 +15,11 @@ import { doesBinExist, getBinPath } from "./lib/utils";
  * This handles the case where Hugo may mysteriously disappear (see issue #81),
  * ensuring the binary is always available when this function is called.
  *
+ * Environment variables that affect behavior:
+ * - HUGO_BIN_PATH: Use a custom binary path (skips auto-install if missing)
+ *
  * @returns A promise that resolves with the absolute path to the Hugo binary
- * @throws {Error} If installation fails or the platform is unsupported
+ * @throws {Error} If installation fails, the platform is unsupported, or custom binary is missing
  *
  * @example
  * ```typescript
@@ -26,7 +30,16 @@ import { doesBinExist, getBinPath } from "./lib/utils";
  * ```
  */
 export const getHugoBinary = async (): Promise<string> => {
+  const envConfig = getEnvConfig();
   const bin = getBinPath();
+
+  // If using a custom binary path, don't try to auto-install
+  if (envConfig.binPath) {
+    if (!doesBinExist(bin)) {
+      throw new Error(`Custom Hugo binary not found at HUGO_BIN_PATH: ${bin}`);
+    }
+    return bin;
+  }
 
   // A fix for fleeting ENOENT errors, where Hugo seems to disappear. For now,
   // just reinstall Hugo when it's missing and then continue normally like
@@ -34,7 +47,7 @@ export const getHugoBinary = async (): Promise<string> => {
   // See: https://github.com/jakejarvis/hugo-extended/issues/81
   if (!doesBinExist(bin)) {
     // Hugo isn't there for some reason. Try re-installing.
-    console.info("⚠️ Hugo is missing, reinstalling now...");
+    logger.info("⚠️ Hugo is missing, reinstalling now...");
     await install();
   }
 
@@ -361,3 +374,6 @@ export default Object.assign(hugoCompat, hugo);
 
 // Re-export types for convenience
 export type { HugoCommand, HugoOptionsFor } from "./generated/types";
+
+// Re-export env utilities for advanced usage
+export { ENV_VAR_DOCS, getEnvConfig, type HugoEnvConfig } from "./lib/env";
