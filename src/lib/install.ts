@@ -221,6 +221,12 @@ async function install(): Promise<string> {
 
         // Cleanup tar.gz
         fs.unlinkSync(downloadPath);
+      } else {
+        // Defensive: should not happen since unsupported platforms are caught earlier
+        // and pkg files are handled in the darwin branch above
+        throw new Error(
+          `Unexpected archive type for ${releaseFile}. Expected .zip or .tar.gz for this platform.`,
+        );
       }
 
       const binPath = path.join(binDir, binFile);
