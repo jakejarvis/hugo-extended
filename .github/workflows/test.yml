@@ -182,8 +182,8 @@ jobs:
           echo "Extended version verified"
 
   # macOS-specific tests (symlink behavior, pkg installation)
-  macos-specifics:
-    name: macOS Specifics
+  macos-quirks:
+    name: macOS quirks
     needs: unit
     runs-on: macos-latest
     steps:
@@ -230,9 +230,9 @@ jobs:
           fi
           /usr/local/bin/hugo version
 
-  # Linux-specific tests (tar.gz extraction, permissions)
-  linux-specifics:
-    name: Linux Specifics
+  # Linux- tests (tar.gz extraction, permissions)
+  linux-quirks:
+    name: Linux quirks
     needs: unit
     runs-on: ubuntu-latest
     steps:
@@ -287,9 +287,9 @@ jobs:
       - name: Verify binary runs
         run: ./bin/hugo version
 
-  # Windows-specific tests (zip extraction)
-  windows-specifics:
-    name: Windows Specifics
+  # Windows- tests (zip extraction)
+  windows-quirks:
+    name: Windows quirks
     needs: unit
     runs-on: windows-latest
     steps:
@@ -404,12 +404,3 @@ jobs:
             exit 1
           }
           ./bin/hugo.exe version
-
-  # All tests must pass for the PR to be mergeable
-  all-tests:
-    name: All Tests Passed
-    needs: [unit, integration, e2e, fresh-install, macos-specifics, linux-specifics, windows-specifics, reinstall]
-    runs-on: ubuntu-latest
-    steps:
-      - name: All tests passed
-        run: echo "✅ All tests passed successfully!"
