@@ -1,0 +1,136 @@
+name: Bump Hugo Version
+
+on:
+  # Run every 3 hours
+  schedule:
+    - cron: "0 */3 * * *"
+  # Allow manual trigger
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  bump:
+    name: Bump to latest Hugo version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Get current package version
+        id: current
+        run: |
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          echo "version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          echo "Current package version: $CURRENT_VERSION"
+
+      - name: Get latest Hugo release
+        id: hugo
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Fetch latest release from Hugo repo (excludes prereleases by default)
+          LATEST_RELEASE=$(gh api repos/gohugoio/hugo/releases/latest --jq '.tag_name')
+          # Remove 'v' prefix if present
+          LATEST_VERSION="${LATEST_RELEASE#v}"
+          echo "version=$LATEST_VERSION" >> $GITHUB_OUTPUT
+          echo "Latest Hugo version: $LATEST_VERSION"
+
+      - name: Check if update is needed
+        id: check
+        run: |
+          CURRENT="${{ steps.current.outputs.version }}"
+          LATEST="${{ steps.hugo.outputs.version }}"
+
+          if [ "$CURRENT" = "$LATEST" ]; then
+            echo "Already up to date with Hugo v$LATEST"
+            echo "needs_update=false" >> $GITHUB_OUTPUT
+          else
+            echo "New Hugo version available: v$LATEST (current: v$CURRENT)"
+            echo "needs_update=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check if PR already exists
+        id: pr_check
+        if: steps.check.outputs.needs_update == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          LATEST="${{ steps.hugo.outputs.version }}"
+          BRANCH_NAME="hugo-v${LATEST}"
+
+          # Check if a PR for this version already exists
+          EXISTING_PR=$(gh pr list --head "$BRANCH_NAME" --json number --jq '.[0].number // empty')
+
+          if [ -n "$EXISTING_PR" ]; then
+            echo "PR #$EXISTING_PR already exists for Hugo v$LATEST"
+            echo "pr_exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "No existing PR found for Hugo v$LATEST"
+            echo "pr_exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Configure Git
+        if: steps.check.outputs.needs_update == 'true' && steps.pr_check.outputs.pr_exists == 'false'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Create branch and bump version
+        if: steps.check.outputs.needs_update == 'true' && steps.pr_check.outputs.pr_exists == 'false'
+        run: |
+          LATEST="${{ steps.hugo.outputs.version }}"
+          BRANCH_NAME="hugo-v${LATEST}"
+
+          # Create new branch
+          git checkout -b "$BRANCH_NAME"
+
+          # Use npm version to properly bump (updates package.json and package-lock.json)
+          # --no-git-tag-version prevents creating a tag, we'll let the publish workflow handle that
+          npm version "$LATEST" --no-git-tag-version
+
+          # Stage package files
+          git add package.json package-lock.json
+
+      - name: Commit and push
+        if: steps.check.outputs.needs_update == 'true' && steps.pr_check.outputs.pr_exists == 'false'
+        run: |
+          LATEST="${{ steps.hugo.outputs.version }}"
+          BRANCH_NAME="hugo-v${LATEST}"
+
+          git commit -m "chore: bump to Hugo v${LATEST}"
+          git push origin "$BRANCH_NAME"
+
+      - name: Create Pull Request
+        if: steps.check.outputs.needs_update == 'true' && steps.pr_check.outputs.pr_exists == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          LATEST="${{ steps.hugo.outputs.version }}"
+          BRANCH_NAME="hugo-v${LATEST}"
+
+          gh pr create \
+            --title "chore: bump to Hugo v${LATEST}" \
+            --body "## 🚀 New Hugo Release
+
+          This PR updates the package to match **Hugo v${LATEST}**.
+
+          ### Changes
+          - Bumped package version to \`${LATEST}\`
+
+          Type definitions and flag specs will be regenerated automatically during CI and publish.
+
+          ### Hugo Release
+          📦 [Hugo v${LATEST} Release Notes](https://github.com/gohugoio/hugo/releases/tag/v${LATEST})
+
+          ---
+          *This PR was automatically created by the [Bump Hugo Version](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) workflow.*" \
+            --head "$BRANCH_NAME" \
+            --base main
