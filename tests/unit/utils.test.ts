@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   getBinFilename,
   getChecksumFilename,
@@ -9,7 +9,11 @@ import {
 
 describe("utils", () => {
   describe("getBinFilename", () => {
-    const originalPlatform = process.platform;
+    let originalPlatform: NodeJS.Platform;
+
+    beforeEach(() => {
+      originalPlatform = process.platform;
+    });
 
     afterEach(() => {
       Object.defineProperty(process, "platform", { value: originalPlatform });
@@ -37,8 +41,13 @@ describe("utils", () => {
   });
 
   describe("getReleaseFilename", () => {
-    const originalPlatform = process.platform;
-    const originalArch = process.arch;
+    let originalPlatform: NodeJS.Platform;
+    let originalArch: NodeJS.Architecture;
+
+    beforeEach(() => {
+      originalPlatform = process.platform;
+      originalArch = process.arch;
+    });
 
     afterEach(() => {
       Object.defineProperty(process, "platform", { value: originalPlatform });

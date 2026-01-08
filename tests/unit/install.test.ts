@@ -1,5 +1,5 @@
 import crypto from "node:crypto";
-import { afterEach, assert, describe, expect, it } from "vitest";
+import { afterEach, assert, beforeEach, describe, expect, it } from "vitest";
 import { getArchiveType, parseChecksumFile } from "../../src/lib/install";
 import { getReleaseFilename } from "../../src/lib/utils";
 
@@ -166,8 +166,13 @@ f0e9d8c7b6a5432109876543210fedcba0987654321fedcba0987654321fedc  hugo_extended_0
   });
 
   describe("getReleaseFilename + getArchiveType integration", () => {
-    const originalPlatform = process.platform;
-    const originalArch = process.arch;
+    let originalPlatform: NodeJS.Platform;
+    let originalArch: NodeJS.Architecture;
+
+    beforeEach(() => {
+      originalPlatform = process.platform;
+      originalArch = process.arch;
+    });
 
     afterEach(() => {
       Object.defineProperty(process, "platform", { value: originalPlatform });
