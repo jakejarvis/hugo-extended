@@ -67,6 +67,7 @@ npm test                 # all tests (vitest run)
 npm run test:watch       # watch mode
 npm run test:unit        # unit tests only
 npm run test:integration # integration tests only (runs real Hugo)
+npm run test:e2e         # end-to-end installation tests
 npm run test:coverage    # coverage via v8
 ```
 
@@ -76,18 +77,25 @@ npm run test:coverage    # coverage via v8
   - Fast, pure TS/JS (no Hugo execution).
   - Example: `tests/unit/args.test.ts` covers argv building behavior driven by `flags.json`.
   - Example: `tests/unit/types.test.ts` uses `expectTypeOf` to validate type surfaces.
+  - Example: `tests/unit/utils.test.ts` covers platform detection, release filename resolution.
+  - Example: `tests/unit/install.test.ts` covers checksum parsing, archive type detection.
 
 - `tests/integration/*`
   - Executes real Hugo commands and does real filesystem work in temp dirs.
   - **Avoid `process.chdir()`** in tests: Vitest worker contexts may not support it.
-    - Prefer passing Hugo’s global `--source` via `{ source: sitePath }`.
+    - Prefer passing Hugo's global `--source` via `{ source: sitePath }`.
+
+- `tests/e2e/*`
+  - End-to-end tests for the full installation pipeline.
+  - Verifies binary installation, permissions, symlinks (macOS), and version matching.
+  - Platform-specific tests use `it.skipIf()` to skip on unsupported platforms.
 
 ### Integration test expectations to keep in mind
 
-- Hugo output is noisy (e.g. “Congratulations! Your new Hugo site…”). Tests should assert on filesystem results instead of brittle stdout text.
+- Hugo output is noisy (e.g. "Congratulations! Your new Hugo site…"). Tests should assert on filesystem results instead of brittle stdout text.
 - Hugo scaffolding changes over time:
   - Example: `hugo new theme` in 0.154.x generates a theme skeleton with `hugo.toml` / `hugo.yaml` rather than `theme.toml`.
-- Some flags may exist but not behave as you’d intuit for a given command:
+- Some flags may exist but not behave as you'd intuit for a given command:
   - Example: `hugo new site --force` does **not** overwrite an existing `hugo.toml` in 0.154.x.
 
 ## Practical tips for agents making changes
@@ -102,4 +110,3 @@ npm run test:coverage    # coverage via v8
 
 - If you touch exports in `src/hugo.ts`:
   - Remember: consumers rely on the **default export being callable** (binary path) and having builder methods attached.
-

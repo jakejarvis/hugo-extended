@@ -52,6 +52,7 @@
     "test:watch": "vitest",
     "test:unit": "vitest run tests/unit",
     "test:integration": "vitest run tests/integration",
+    "test:e2e": "vitest run tests/e2e",
     "test:coverage": "vitest run --coverage",
     "postinstall": "node postinstall.js",
     "prepublishOnly": "npm run generate-types && npm run build"
