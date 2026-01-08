@@ -20,6 +20,51 @@ import {
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 /**
+ * Archive types supported by the installer.
+ */
+export type ArchiveType = "zip" | "tar.gz" | "pkg" | null;
+
+/**
+ * Detects the archive type from a filename based on its extension.
+ *
+ * @param filename - The filename to check
+ * @returns The detected archive type, or null if unknown
+ */
+export function getArchiveType(filename: string): ArchiveType {
+  if (filename.endsWith(".zip")) return "zip";
+  if (filename.endsWith(".tar.gz")) return "tar.gz";
+  if (filename.endsWith(".pkg")) return "pkg";
+  return null;
+}
+
+/**
+ * Parses a checksums file content into a lookup map.
+ *
+ * The checksums file format is: "sha256hash  filename" (hash followed by whitespace and filename).
+ * This is the standard format used by Hugo releases.
+ *
+ * @param content - The raw content of the checksums file
+ * @returns A Map of filename to SHA-256 hash
+ */
+export function parseChecksumFile(content: string): Map<string, string> {
+  const checksums = new Map<string, string>();
+
+  for (const line of content.split("\n")) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+
+    const tokens = trimmed.split(/\s+/);
+    if (tokens.length >= 2) {
+      const hash = tokens[0] as string;
+      const filename = tokens[tokens.length - 1] as string;
+      checksums.set(filename, hash);
+    }
+  }
+
+  return checksums;
+}
+
+/**
  * Downloads a file from a URL to a local destination path.
  *
  * @param url - The URL to download the file from
@@ -59,14 +104,10 @@ async function verifyChecksum(
   if (!response.ok) {
     throw new Error(`Failed to download checksums: ${response.statusText}`);
   }
-  const checksums = await response.text();
+  const checksumContent = await response.text();
+  const checksums = parseChecksumFile(checksumContent);
 
-  // checksums file format: "sha256  filename"
-  const expectedChecksum = checksums
-    .split("\n")
-    .map((line) => line.trim().split(/\s+/))
-    .find((tokens) => tokens[tokens.length - 1] === filename)?.[0];
-
+  const expectedChecksum = checksums.get(filename);
   if (!expectedChecksum) {
     throw new Error(`Checksum for ${filename} not found in checksums file.`);
   }
@@ -165,13 +206,14 @@ async function install(): Promise<string> {
     } else {
       console.info("📦 Extracting...");
 
-      if (releaseFile.endsWith(".zip")) {
+      const archiveType = getArchiveType(releaseFile);
+      if (archiveType === "zip") {
         const zip = new AdmZip(downloadPath);
         zip.extractAllTo(binDir, true);
 
         // Cleanup zip
         fs.unlinkSync(downloadPath);
-      } else if (releaseFile.endsWith(".tar.gz")) {
+      } else if (archiveType === "tar.gz") {
         await tar.x({
           file: downloadPath,
           cwd: binDir,

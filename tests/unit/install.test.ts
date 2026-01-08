@@ -1,112 +1,203 @@
 import crypto from "node:crypto";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
+import { getArchiveType, parseChecksumFile } from "../../src/lib/install";
+import { getReleaseFilename } from "../../src/lib/utils";
 
 /**
  * Unit tests for installation logic that can be tested without network calls.
  * These tests verify:
- * - Checksum verification logic
- * - Error handling for various failure scenarios
- * - Platform-specific path handling
+ * - Checksum file parsing
+ * - Archive type detection
+ * - SHA-256 computation
  */
 describe("Installation Logic", () => {
-  describe("Checksum Verification", () => {
+  describe("SHA-256 Computation", () => {
     it("should correctly compute SHA-256 hash", () => {
       const testData = "Hello, Hugo!";
       const hash = crypto.createHash("sha256");
       hash.update(Buffer.from(testData));
       const digest = hash.digest("hex");
 
-      // Pre-computed expected hash for "Hello, Hugo!"
-      expect(digest).toBe(
-        "c7e3f5f0e8d3c2b1a0f9e8d7c6b5a4938271605f4e3d2c1b0a9f8e7d6c5b4a39".slice(
-          0,
-          64,
-        ) !== digest
-          ? digest
-          : digest,
-      );
+      // Pre-computed SHA-256 hash for "Hello, Hugo!"
+      const expectedHash =
+        "766a2e18bc3e2f7e217b4566b7988ca3a28e1de8cd70d995219088497a0830e5";
+
+      expect(digest).toBe(expectedHash);
       expect(digest).toHaveLength(64);
     });
+  });
 
+  describe("parseChecksumFile", () => {
     it("should parse checksums file format correctly", () => {
-      // Real checksums file format from Hugo releases:
-      // "sha256hash  filename"
       const checksumContent = `
 abc123def456  hugo_0.154.3_linux-amd64.tar.gz
 def789abc012  hugo_extended_0.154.3_linux-amd64.tar.gz
 ghi345jkl678  hugo_0.154.3_windows-amd64.zip
 `.trim();
 
-      const lines = checksumContent.split("\n");
-      const parsed = lines.map((line) => {
-        const tokens = line.trim().split(/\s+/);
-        return { hash: tokens[0], filename: tokens[tokens.length - 1] };
-      });
+      const checksums = parseChecksumFile(checksumContent);
 
-      expect(parsed).toEqual([
-        { hash: "abc123def456", filename: "hugo_0.154.3_linux-amd64.tar.gz" },
-        {
-          hash: "def789abc012",
-          filename: "hugo_extended_0.154.3_linux-amd64.tar.gz",
-        },
-        { hash: "ghi345jkl678", filename: "hugo_0.154.3_windows-amd64.zip" },
-      ]);
+      expect(checksums.size).toBe(3);
+      expect(checksums.get("hugo_0.154.3_linux-amd64.tar.gz")).toBe(
+        "abc123def456",
+      );
+      expect(checksums.get("hugo_extended_0.154.3_linux-amd64.tar.gz")).toBe(
+        "def789abc012",
+      );
+      expect(checksums.get("hugo_0.154.3_windows-amd64.zip")).toBe(
+        "ghi345jkl678",
+      );
     });
 
     it("should find correct checksum for a given filename", () => {
-      const checksums = `
+      const checksumContent = `
 abc123def456  hugo_0.154.3_linux-amd64.tar.gz
 def789abc012  hugo_extended_0.154.3_linux-amd64.tar.gz
 ghi345jkl678  hugo_0.154.3_windows-amd64.zip
 `;
-      const filename = "hugo_extended_0.154.3_linux-amd64.tar.gz";
+      const checksums = parseChecksumFile(checksumContent);
 
-      const expectedChecksum = checksums
-        .split("\n")
-        .map((line) => line.trim().split(/\s+/))
-        .find((tokens) => tokens[tokens.length - 1] === filename)?.[0];
-
-      expect(expectedChecksum).toBe("def789abc012");
+      expect(checksums.get("hugo_extended_0.154.3_linux-amd64.tar.gz")).toBe(
+        "def789abc012",
+      );
     });
 
     it("should return undefined when filename not in checksums", () => {
-      const checksums = `
+      const checksumContent = `
 abc123def456  hugo_0.154.3_linux-amd64.tar.gz
 `;
-      const filename = "hugo_0.154.3_windows-amd64.zip";
+      const checksums = parseChecksumFile(checksumContent);
 
-      const expectedChecksum = checksums
-        .split("\n")
-        .map((line) => line.trim().split(/\s+/))
-        .find((tokens) => tokens[tokens.length - 1] === filename)?.[0];
+      expect(checksums.get("hugo_0.154.3_windows-amd64.zip")).toBeUndefined();
+    });
 
-      expect(expectedChecksum).toBeUndefined();
+    it("should handle empty content", () => {
+      const checksums = parseChecksumFile("");
+      expect(checksums.size).toBe(0);
+    });
+
+    it("should handle content with only whitespace lines", () => {
+      const checksums = parseChecksumFile("   \n\n   \n");
+      expect(checksums.size).toBe(0);
+    });
+
+    it("should handle real-world Hugo checksums format", () => {
+      // Real format from Hugo releases uses two spaces between hash and filename
+      const realChecksumContent = `
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  hugo_0.154.3_checksums.txt
+a1b2c3d4e5f67890abcdef1234567890abcdef1234567890abcdef1234567890  hugo_extended_0.154.3_darwin-universal.pkg
+f0e9d8c7b6a5432109876543210fedcba0987654321fedcba0987654321fedc  hugo_extended_0.154.3_linux-amd64.tar.gz
+`;
+      const checksums = parseChecksumFile(realChecksumContent);
+
+      expect(checksums.size).toBe(3);
+      expect(checksums.get("hugo_extended_0.154.3_darwin-universal.pkg")).toBe(
+        "a1b2c3d4e5f67890abcdef1234567890abcdef1234567890abcdef1234567890",
+      );
     });
   });
 
-  describe("Archive Type Detection", () => {
+  describe("getArchiveType", () => {
     it("should identify zip files", () => {
-      expect("hugo_extended_0.154.3_windows-amd64.zip".endsWith(".zip")).toBe(
-        true,
-      );
-      expect("hugo_extended_0.154.3_linux-amd64.tar.gz".endsWith(".zip")).toBe(
-        false,
+      expect(getArchiveType("hugo_extended_0.154.3_windows-amd64.zip")).toBe(
+        "zip",
       );
     });
 
     it("should identify tar.gz files", () => {
-      expect(
-        "hugo_extended_0.154.3_linux-amd64.tar.gz".endsWith(".tar.gz"),
-      ).toBe(true);
-      expect(
-        "hugo_extended_0.154.3_windows-amd64.zip".endsWith(".tar.gz"),
-      ).toBe(false);
+      expect(getArchiveType("hugo_extended_0.154.3_linux-amd64.tar.gz")).toBe(
+        "tar.gz",
+      );
     });
 
     it("should identify pkg files", () => {
-      expect(
-        "hugo_extended_0.154.3_darwin-universal.pkg".endsWith(".pkg"),
-      ).toBe(true);
+      expect(getArchiveType("hugo_extended_0.154.3_darwin-universal.pkg")).toBe(
+        "pkg",
+      );
+    });
+
+    it("should return null for unknown extensions", () => {
+      expect(getArchiveType("hugo_0.154.3_readme.txt")).toBeNull();
+      expect(getArchiveType("hugo.exe")).toBeNull();
+      expect(getArchiveType("checksums.txt")).toBeNull();
+    });
+
+    it("should correctly detect archive type for all platform release filenames", () => {
+      // Windows x64 -> zip
+      expect(getArchiveType("hugo_extended_0.154.3_windows-amd64.zip")).toBe(
+        "zip",
+      );
+
+      // Windows arm64 -> zip
+      expect(getArchiveType("hugo_0.154.3_windows-arm64.zip")).toBe("zip");
+
+      // Linux x64 -> tar.gz
+      expect(getArchiveType("hugo_extended_0.154.3_linux-amd64.tar.gz")).toBe(
+        "tar.gz",
+      );
+
+      // Linux arm64 -> tar.gz
+      expect(getArchiveType("hugo_extended_0.154.3_linux-arm64.tar.gz")).toBe(
+        "tar.gz",
+      );
+
+      // macOS -> pkg
+      expect(getArchiveType("hugo_extended_0.154.3_darwin-universal.pkg")).toBe(
+        "pkg",
+      );
+
+      // FreeBSD -> tar.gz
+      expect(getArchiveType("hugo_0.154.3_freebsd-amd64.tar.gz")).toBe(
+        "tar.gz",
+      );
+
+      // OpenBSD -> tar.gz
+      expect(getArchiveType("hugo_0.154.3_openbsd-amd64.tar.gz")).toBe(
+        "tar.gz",
+      );
+    });
+  });
+
+  describe("getReleaseFilename + getArchiveType integration", () => {
+    const originalPlatform = process.platform;
+    const originalArch = process.arch;
+
+    afterEach(() => {
+      Object.defineProperty(process, "platform", { value: originalPlatform });
+      Object.defineProperty(process, "arch", { value: originalArch });
+    });
+
+    it("should return zip for Windows release filenames", () => {
+      Object.defineProperty(process, "platform", { value: "win32" });
+      Object.defineProperty(process, "arch", { value: "x64" });
+
+      const filename = getReleaseFilename("0.154.3");
+      if (filename === null) {
+        expect.fail("Expected filename to not be null");
+      }
+      expect(getArchiveType(filename)).toBe("zip");
+    });
+
+    it("should return tar.gz for Linux release filenames", () => {
+      Object.defineProperty(process, "platform", { value: "linux" });
+      Object.defineProperty(process, "arch", { value: "x64" });
+
+      const filename = getReleaseFilename("0.154.3");
+      if (filename === null) {
+        expect.fail("Expected filename to not be null");
+      }
+      expect(getArchiveType(filename)).toBe("tar.gz");
+    });
+
+    it("should return pkg for macOS release filenames", () => {
+      Object.defineProperty(process, "platform", { value: "darwin" });
+      Object.defineProperty(process, "arch", { value: "arm64" });
+
+      const filename = getReleaseFilename("0.154.3");
+      if (filename === null) {
+        expect.fail("Expected filename to not be null");
+      }
+      expect(getArchiveType(filename)).toBe("pkg");
     });
   });
 
