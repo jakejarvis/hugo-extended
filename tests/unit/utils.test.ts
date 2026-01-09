@@ -440,7 +440,7 @@ describe("utils", () => {
     describe("warn", () => {
       it("should log when not quiet", () => {
         logger.warn("warning message");
-        expect(console.warn).toHaveBeenCalledWith("warning message");
+        expect(console.warn).toHaveBeenCalledWith("⚠ warning message");
       });
 
       it("should not log when HUGO_SILENT is set", () => {
@@ -453,13 +453,13 @@ describe("utils", () => {
     describe("error", () => {
       it("should always log errors", () => {
         logger.error("error message");
-        expect(console.error).toHaveBeenCalledWith("error message");
+        expect(console.error).toHaveBeenCalledWith("✖ error message");
       });
 
       it("should log errors even when quiet", () => {
         process.env.HUGO_QUIET = "1";
         logger.error("error message");
-        expect(console.error).toHaveBeenCalledWith("error message");
+        expect(console.error).toHaveBeenCalledWith("✖ error message");
       });
     });
   });

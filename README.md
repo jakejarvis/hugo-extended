@@ -252,9 +252,9 @@ If Hugo seems to disappear (rare edge case), it will be automatically reinstalle
 npm rebuild hugo-extended
 ```
 
-### Permission issues on macOS
+### macOS installation
 
-As of [v0.153.0](https://github.com/gohugoio/hugo/releases/tag/v0.153.0), Hugo is distributed as a full installer for macOS, rather than a simple binary/executable file. This package will make its best effort to run the installer for you (which includes prompting you for `sudo` access) but this method introduces infinitely more opportunities for things to go wrong. Please [open an issue](https://github.com/jakejarvis/hugo-extended/issues/new) if you encounter any issues.
+As of [v0.153.0](https://github.com/gohugoio/hugo/releases/tag/v0.153.0), Hugo is distributed as a `.pkg` installer for macOS. This package extracts the binary locally using `pkgutil --expand-full`, so **no sudo or global installation is required**. The Hugo binary stays in `node_modules` just like on other platforms.
 
 ## License
 

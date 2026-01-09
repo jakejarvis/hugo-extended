@@ -120,8 +120,7 @@ export function getBinFilename(): string {
  * 1. HUGO_BIN_PATH environment variable (if set)
  * 2. Local bin directory (./bin/hugo or ./bin/hugo.exe)
  *
- * @returns The absolute path to hugo binary.
- *   On macOS (when using local bin), this is a symlink to "/usr/local/bin/hugo".
+ * @returns The absolute path to hugo binary
  */
 export function getBinPath(): string {
   const envConfig = getEnvConfig();
@@ -286,7 +285,7 @@ export const logger = {
    */
   warn: (message: string): void => {
     if (!getEnvConfig().quiet) {
-      console.warn(message);
+      console.warn(`⚠ ${message}`);
     }
   },
 
@@ -294,6 +293,6 @@ export const logger = {
    * Log an error message (always shown, even in quiet mode).
    */
   error: (message: string): void => {
-    console.error(message);
+    console.error(`✖ ${message}`);
   },
 };

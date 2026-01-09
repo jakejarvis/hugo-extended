@@ -26,8 +26,8 @@ Notes for LLM coding agents working on `hugo-extended`.
 
 - **Binary installation**: `src/lib/install.ts`
   - Downloads Hugo release assets and verifies SHA-256 checksums.
-  - **macOS v0.153.0+**: uses `sudo installer -pkg ... -target /` (and then symlinks `bin/hugo` -> `/usr/local/bin/hugo`).
-  - **macOS pre-v0.153.0**: extracts `.tar.gz` archive into `bin/` (no sudo required).
+  - **macOS v0.153.0+**: uses `pkgutil --expand-full` to extract the binary from the `.pkg` file (no sudo required).
+  - **macOS pre-v0.153.0**: extracts `.tar.gz` archive into `bin/`.
   - **non-macOS**: extracts archive into `bin/` and `chmod +x`.
 
 - **Environment variables**: `src/lib/env.ts`
@@ -139,6 +139,6 @@ Some variables have aliases (e.g., `HUGO_FORCE_STANDARD` → `HUGO_NO_EXTENDED`,
 
 ### Version-dependent behavior
 
-- **macOS v0.153.0+**: Hugo ships as `.pkg` installer, requires `sudo`.
+- **macOS v0.153.0+**: Hugo ships as `.pkg` installer, extracted locally using `pkgutil --expand-full` (no sudo required).
 - **macOS pre-v0.153.0**: Hugo ships as `.tar.gz`, extracted to `bin/` directly.
 - The `usesMacOSPkg(version)` and `compareVersions(a, b)` utilities in `src/lib/utils.ts` handle this.

@@ -1,6 +1,13 @@
 import crypto from "node:crypto";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 import { afterEach, assert, beforeEach, describe, expect, it } from "vitest";
-import { getArchiveType, parseChecksumFile } from "../../src/lib/install";
+import {
+  extractPkg,
+  getArchiveType,
+  parseChecksumFile,
+} from "../../src/lib/install";
 import { getReleaseFilename } from "../../src/lib/utils";
 
 /**
@@ -163,6 +170,53 @@ f0e9d8c7b6a5432109876543210fedcba0987654321fedcba0987654321fedc  hugo_extended_0
         "tar.gz",
       );
     });
+  });
+
+  describe("extractPkg", () => {
+    it.skipIf(process.platform !== "darwin")(
+      "should throw error for non-existent .pkg file",
+      () => {
+        const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "hugo-test-"));
+        try {
+          const nonExistentPkg = path.join(tempDir, "nonexistent.pkg");
+          expect(() => extractPkg(nonExistentPkg, tempDir)).toThrow();
+        } finally {
+          fs.rmSync(tempDir, { recursive: true, force: true });
+        }
+      },
+    );
+
+    it.skipIf(process.platform !== "darwin")(
+      "should throw descriptive error when pkgutil fails on invalid pkg",
+      () => {
+        // Create a temporary directory with a fake .pkg file
+        const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "hugo-test-"));
+        try {
+          // Create a fake .pkg file (just an empty file - pkgutil will fail to expand it)
+          const fakePkg = path.join(tempDir, "fake.pkg");
+          fs.writeFileSync(fakePkg, "not a real pkg");
+
+          expect(() => extractPkg(fakePkg, tempDir)).toThrow();
+        } finally {
+          fs.rmSync(tempDir, { recursive: true, force: true });
+        }
+      },
+    );
+
+    it.skipIf(process.platform === "darwin")(
+      "should not be available on non-macOS platforms (pkgutil is macOS-only)",
+      () => {
+        // On non-macOS platforms, pkgutil doesn't exist, so the function will fail
+        const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "hugo-test-"));
+        try {
+          const fakePkg = path.join(tempDir, "fake.pkg");
+          fs.writeFileSync(fakePkg, "");
+          expect(() => extractPkg(fakePkg, tempDir)).toThrow();
+        } finally {
+          fs.rmSync(tempDir, { recursive: true, force: true });
+        }
+      },
+    );
   });
 
   describe("getReleaseFilename + getArchiveType integration", () => {
