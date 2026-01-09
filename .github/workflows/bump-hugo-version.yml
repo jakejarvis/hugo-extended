@@ -16,11 +16,13 @@ jobs:
     name: Bump to latest Hugo version
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - name: Checkout
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-node@v6
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
         with:
           node-version: "24"
 
@@ -64,7 +66,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           LATEST="${{ steps.hugo.outputs.version }}"
-          BRANCH_NAME="hugo-v${LATEST}"
+          BRANCH_NAME="autobump-hugo-v${LATEST}"
 
           # Check if a PR for this version already exists
           EXISTING_PR=$(gh pr list --head "$BRANCH_NAME" --json number --jq '.[0].number // empty')
@@ -87,7 +89,7 @@ jobs:
         if: steps.check.outputs.needs_update == 'true' && steps.pr_check.outputs.pr_exists == 'false'
         run: |
           LATEST="${{ steps.hugo.outputs.version }}"
-          BRANCH_NAME="hugo-v${LATEST}"
+          BRANCH_NAME="autobump-hugo-v${LATEST}"
 
           # Create new branch
           git checkout -b "$BRANCH_NAME"
@@ -103,7 +105,7 @@ jobs:
         if: steps.check.outputs.needs_update == 'true' && steps.pr_check.outputs.pr_exists == 'false'
         run: |
           LATEST="${{ steps.hugo.outputs.version }}"
-          BRANCH_NAME="hugo-v${LATEST}"
+          BRANCH_NAME="autobump-hugo-v${LATEST}"
 
           git commit -m "chore: bump to Hugo v${LATEST}"
           git push origin "$BRANCH_NAME"
@@ -114,7 +116,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           LATEST="${{ steps.hugo.outputs.version }}"
-          BRANCH_NAME="hugo-v${LATEST}"
+          BRANCH_NAME="autobump-hugo-v${LATEST}"
 
           gh pr create \
             --title "chore: bump to Hugo v${LATEST}" \
