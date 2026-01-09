@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { existsSync, lstatSync, readlinkSync, statSync } from "node:fs";
+import { existsSync, lstatSync, statSync } from "node:fs";
 import { beforeAll, describe, expect, it } from "vitest";
 import hugo, { execWithOutput, getHugoBinary } from "../../src/hugo";
 import {
@@ -59,13 +59,13 @@ describe("Hugo Installation E2E", () => {
     );
 
     it.skipIf(process.platform !== "darwin")(
-      "should be a symlink to /usr/local/bin/hugo on macOS",
+      "should be a regular file on macOS (not a symlink)",
       () => {
-        const isSymlink = lstatSync(binaryPath).isSymbolicLink();
-        expect(isSymlink).toBe(true);
-
-        const target = readlinkSync(binaryPath);
-        expect(target).toBe("/usr/local/bin/hugo");
+        // Since v0.153.0, we extract the .pkg locally using pkgutil
+        // instead of running `sudo installer`, so the binary is a regular file
+        const stats = lstatSync(binaryPath);
+        expect(stats.isSymbolicLink()).toBe(false);
+        expect(stats.isFile()).toBe(true);
       },
     );
   });

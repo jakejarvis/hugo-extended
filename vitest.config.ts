@@ -8,6 +8,9 @@ export default defineConfig({
     // Test file patterns
     include: ["tests/**/*.test.ts"],
 
+    // Don't show noisy Hugo output unless the test fails
+    silent: "passed-only",
+
     // Coverage configuration
     coverage: {
       provider: "v8",

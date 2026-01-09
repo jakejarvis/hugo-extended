@@ -1,6 +1,7 @@
-import { spawnSync } from "node:child_process";
+import { execSync } from "node:child_process";
 import crypto from "node:crypto";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
@@ -86,6 +87,52 @@ async function downloadFile(url: string, dest: string): Promise<void> {
 }
 
 /**
+ * Extracts a Hugo binary from a macOS .pkg file without requiring sudo.
+ *
+ * Uses `pkgutil --expand-full` to expand the package, then locates and copies
+ * the Hugo binary from the payload to the destination directory.
+ *
+ * The Hugo .pkg structure after expansion contains:
+ * - A "Payload" directory containing the hugo binary directly
+ * - Or a component package directory with Payload inside
+ *
+ * @param pkgPath - The path to the .pkg file to extract
+ * @param destDir - The directory where the hugo binary should be placed
+ * @throws {Error} If extraction fails, Payload is not found, or hugo binary is missing
+ * @see https://github.com/jmooring/hvm/commit/16eb55ae4965b5d2e414061085490a90fe7ea73e
+ */
+export function extractPkg(pkgPath: string, destDir: string): void {
+  // Create a temporary directory for expansion
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "hugo-pkg-"));
+
+  try {
+    const expansionDir = path.join(tempDir, "expanded");
+
+    // Use pkgutil to expand the package without installing
+    execSync(`pkgutil --expand-full "${pkgPath}" "${expansionDir}"`, {
+      stdio: "pipe",
+    });
+
+    // Find the hugo binary in the expanded package
+    const hugoPayload = path.join(expansionDir, "Payload", "hugo");
+
+    if (!fs.existsSync(hugoPayload)) {
+      throw new Error(
+        "Could not find hugo binary in expanded .pkg. Expected path: */Payload/hugo",
+      );
+    }
+
+    // Copy the binary to the destination
+    const destPath = path.join(destDir, getBinFilename());
+    fs.copyFileSync(hugoPayload, destPath);
+    fs.chmodSync(destPath, 0o755);
+  } finally {
+    // Clean up the temp directory
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+}
+
+/**
  * Verifies that a downloaded file matches its expected SHA-256 checksum.
  *
  * Downloads the checksums file from GitHub, extracts the expected checksum for the
@@ -133,9 +180,11 @@ async function verifyChecksum(
  * - Determines the correct Hugo release file for the current platform and architecture
  * - Downloads the release file and checksums from GitHub (or custom mirror)
  * - Verifies the integrity of the downloaded file using SHA-256 checksums (unless HUGO_SKIP_CHECKSUM is set)
- * - Extracts or installs the binary (platform-specific):
- *   - macOS: Uses `sudo installer` to install the .pkg file to /usr/local/bin
- *   - Windows/Linux: Extracts the .zip or .tar.gz archive to the local bin directory
+ * - Extracts the binary (platform-specific):
+ *   - macOS v0.153.0+: Extracts from .pkg using pkgutil (no sudo required)
+ *   - macOS pre-v0.153.0: Extracts from .tar.gz archive
+ *   - Windows: Extracts from .zip archive
+ *   - Linux/BSD: Extracts from .tar.gz archive
  * - Sets appropriate file permissions on Unix-like systems
  * - Displays the installed Hugo version
  *
@@ -166,10 +215,10 @@ async function install(): Promise<string> {
 
     if (!isExtended(releaseFile)) {
       if (envConfig.forceStandard) {
-        logger.info("ℹ️ Installing vanilla Hugo (HUGO_NO_EXTENDED is set).");
+        logger.info("Installing vanilla Hugo (HUGO_NO_EXTENDED is set).");
       } else {
         logger.warn(
-          "ℹ️ Hugo Extended isn't supported on this platform, downloading vanilla Hugo instead.",
+          "Hugo Extended isn't supported on this platform, downloading vanilla Hugo instead.",
         );
       }
     }
@@ -189,83 +238,50 @@ async function install(): Promise<string> {
 
     if (envConfig.skipChecksum) {
       logger.warn(
-        "⚠️ Skipping checksum verification (HUGO_SKIP_CHECKSUM is set).",
+        "Skipping checksum verification (HUGO_SKIP_CHECKSUM is set).",
       );
     } else {
       logger.info("🕵️ Verifying checksum...");
       await verifyChecksum(downloadPath, checksumUrl, releaseFile);
     }
 
+    // All other platforms and macOS pre-0.153.0 (tar.gz) use archive extraction
+    logger.info("📦 Extracting...");
     const archiveType = getArchiveType(releaseFile);
 
-    // macOS .pkg files require special handling with sudo installer
-    if (process.platform === "darwin" && archiveType === "pkg") {
-      logger.info(`💾 Installing ${releaseFile} (requires sudo)...`);
-      // Run MacOS installer
-      const result = spawnSync(
-        "sudo",
-        ["installer", "-pkg", downloadPath, "-target", "/"],
-        {
-          stdio: envConfig.quiet ? "pipe" : "inherit",
-        },
-      );
-
-      if (result.error) throw result.error;
-      if (result.status !== 0) {
-        throw new Error(`Installer failed with exit code ${result.status}`);
-      }
-
-      // Cleanup downloaded pkg
-      fs.unlinkSync(downloadPath);
-
-      // Create symlink in local bin dir for consistency with other platforms
-      const symlinkPath = path.join(binDir, binFile);
-      if (
-        fs.existsSync(symlinkPath) ||
-        fs.lstatSync(symlinkPath, { throwIfNoEntry: false })
-      ) {
-        fs.unlinkSync(symlinkPath);
-      }
-      fs.symlinkSync("/usr/local/bin/hugo", symlinkPath);
+    // macOS .pkg files: extract using pkgutil (no sudo required)
+    if (archiveType === "pkg") {
+      extractPkg(downloadPath, binDir);
+    } else if (archiveType === "zip") {
+      const zip = new AdmZip(downloadPath);
+      zip.extractAllTo(binDir, true);
+    } else if (archiveType === "tar.gz") {
+      await tar.x({
+        file: downloadPath,
+        cwd: binDir,
+      });
     } else {
-      // All other platforms and macOS pre-0.153.0 (tar.gz) use archive extraction
-      logger.info("📦 Extracting...");
+      // Defensive: should not happen since unsupported platforms are caught earlier
+      throw new Error(
+        `Unexpected archive type for ${releaseFile}. Expected .zip, .tar.gz, or .pkg.`,
+      );
+    }
 
-      if (archiveType === "zip") {
-        const zip = new AdmZip(downloadPath);
-        zip.extractAllTo(binDir, true);
+    // Cleanup downloaded package
+    fs.unlinkSync(downloadPath);
 
-        // Cleanup zip
-        fs.unlinkSync(downloadPath);
-      } else if (archiveType === "tar.gz") {
-        await tar.x({
-          file: downloadPath,
-          cwd: binDir,
-        });
-
-        // Cleanup tar.gz
-        fs.unlinkSync(downloadPath);
-      } else {
-        // Defensive: should not happen since unsupported platforms are caught earlier
-        throw new Error(
-          `Unexpected archive type for ${releaseFile}. Expected .zip, .tar.gz, or .pkg.`,
-        );
-      }
-
-      const binPath = path.join(binDir, binFile);
-      if (fs.existsSync(binPath)) {
-        fs.chmodSync(binPath, 0o755);
-      }
+    const binPath = path.join(binDir, binFile);
+    if (fs.existsSync(binPath)) {
+      fs.chmodSync(binPath, 0o755);
     }
 
     logger.info("🎉 Hugo installed successfully!");
 
     // Check version and return path
-    const binPath = path.join(binDir, binFile);
     logger.info(getBinVersion(binPath));
     return binPath;
   } catch (error) {
-    logger.error("⛔ Hugo installation failed. :(");
+    logger.error("Hugo installation failed. :(");
     throw error;
   }
 }

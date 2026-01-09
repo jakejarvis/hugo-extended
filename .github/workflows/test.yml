@@ -219,7 +219,7 @@ jobs:
           fi
           echo "Extended version verified"
 
-  # macOS-specific tests (symlink behavior, pkg installation)
+  # macOS-specific tests (pkg extraction via pkgutil, no sudo required)
   macos-quirks:
     name: macOS quirks
     needs: unit
@@ -252,27 +252,28 @@ jobs:
       - name: Run postinstall
         run: node postinstall.js
 
-      - name: Verify symlink structure
+      - name: Verify binary is regular file (not symlink)
         run: |
-          if [ ! -L "bin/hugo" ]; then
-            echo "bin/hugo is not a symlink!"
+          if [ -L "bin/hugo" ]; then
+            echo "bin/hugo should not be a symlink (we use pkgutil extraction now)!"
             exit 1
           fi
-          TARGET=$(readlink bin/hugo)
-          echo "Symlink target: $TARGET"
-          if [ "$TARGET" != "/usr/local/bin/hugo" ]; then
-            echo "Unexpected symlink target!"
+          if [ ! -f "bin/hugo" ]; then
+            echo "bin/hugo is not a regular file!"
             exit 1
           fi
-          echo "Symlink structure verified"
+          echo "Binary is a regular file (extracted from .pkg via pkgutil)"
 
-      - name: Verify system Hugo binary
+      - name: Verify executable permissions
         run: |
-          if [ ! -f "/usr/local/bin/hugo" ]; then
-            echo "System Hugo binary not found!"
+          if [ ! -x "bin/hugo" ]; then
+            echo "bin/hugo is not executable!"
             exit 1
           fi
-          /usr/local/bin/hugo version
+          echo "Permissions verified"
+
+      - name: Verify binary runs
+        run: ./bin/hugo version
 
   # Linux- tests (tar.gz extraction, permissions)
   linux-quirks:

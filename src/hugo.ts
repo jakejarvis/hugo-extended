@@ -47,7 +47,7 @@ export const getHugoBinary = async (): Promise<string> => {
   // See: https://github.com/jakejarvis/hugo-extended/issues/81
   if (!doesBinExist(bin)) {
     // Hugo isn't there for some reason. Try re-installing.
-    logger.info("⚠️ Hugo is missing, reinstalling now...");
+    logger.warn("Hugo is missing, reinstalling now...");
     await install();
   }
 
