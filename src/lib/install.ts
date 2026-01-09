@@ -7,6 +7,7 @@ import { pipeline } from "node:stream/promises";
 import { fileURLToPath } from "node:url";
 import AdmZip from "adm-zip";
 import * as tar from "tar";
+import { getEnvConfig } from "./env";
 import {
   getBinFilename,
   getBinVersion,
@@ -15,6 +16,7 @@ import {
   getReleaseFilename,
   getReleaseUrl,
   isExtended,
+  logger,
 } from "./utils";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -129,18 +131,27 @@ async function verifyChecksum(
  *
  * This function handles the complete installation process:
  * - Determines the correct Hugo release file for the current platform and architecture
- * - Downloads the release file and checksums from GitHub
- * - Verifies the integrity of the downloaded file using SHA-256 checksums
+ * - Downloads the release file and checksums from GitHub (or custom mirror)
+ * - Verifies the integrity of the downloaded file using SHA-256 checksums (unless HUGO_SKIP_CHECKSUM is set)
  * - Extracts or installs the binary (platform-specific):
  *   - macOS: Uses `sudo installer` to install the .pkg file to /usr/local/bin
  *   - Windows/Linux: Extracts the .zip or .tar.gz archive to the local bin directory
  * - Sets appropriate file permissions on Unix-like systems
  * - Displays the installed Hugo version
  *
+ * Environment variables that affect installation:
+ * - HUGO_OVERRIDE_VERSION: Install a different Hugo version
+ * - HUGO_NO_EXTENDED: Force vanilla Hugo instead of Extended
+ * - HUGO_MIRROR_BASE_URL: Custom download mirror
+ * - HUGO_SKIP_CHECKSUM: Skip SHA-256 verification
+ * - HUGO_QUIET: Suppress progress output
+ *
  * @throws {Error} If the platform is unsupported, download fails, checksum doesn't match, or installation fails
  * @returns A promise that resolves with the absolute path to the installed Hugo binary
  */
 async function install(): Promise<string> {
+  const envConfig = getEnvConfig();
+
   try {
     const version = getPkgVersion();
     const releaseFile = getReleaseFilename(version);
@@ -154,9 +165,13 @@ async function install(): Promise<string> {
     }
 
     if (!isExtended(releaseFile)) {
-      console.warn(
-        "ℹ️ Hugo Extended isn't supported on this platform, downloading vanilla Hugo instead.",
-      );
+      if (envConfig.forceStandard) {
+        logger.info("ℹ️ Installing vanilla Hugo (HUGO_NO_EXTENDED is set).");
+      } else {
+        logger.warn(
+          "ℹ️ Hugo Extended isn't supported on this platform, downloading vanilla Hugo instead.",
+        );
+      }
     }
 
     // Prepare bin directory
@@ -169,20 +184,29 @@ async function install(): Promise<string> {
     const checksumUrl = getReleaseUrl(version, checksumFile);
     const downloadPath = path.join(binDir, releaseFile);
 
-    console.info(`☁️ Downloading ${releaseFile}...`);
+    logger.info(`☁️ Downloading ${releaseFile}...`);
     await downloadFile(releaseUrl, downloadPath);
 
-    console.info("🕵️ Verifying checksum...");
-    await verifyChecksum(downloadPath, checksumUrl, releaseFile);
+    if (envConfig.skipChecksum) {
+      logger.warn(
+        "⚠️ Skipping checksum verification (HUGO_SKIP_CHECKSUM is set).",
+      );
+    } else {
+      logger.info("🕵️ Verifying checksum...");
+      await verifyChecksum(downloadPath, checksumUrl, releaseFile);
+    }
 
-    if (process.platform === "darwin") {
-      console.info(`💾 Installing ${releaseFile} (requires sudo)...`);
+    const archiveType = getArchiveType(releaseFile);
+
+    // macOS .pkg files require special handling with sudo installer
+    if (process.platform === "darwin" && archiveType === "pkg") {
+      logger.info(`💾 Installing ${releaseFile} (requires sudo)...`);
       // Run MacOS installer
       const result = spawnSync(
         "sudo",
         ["installer", "-pkg", downloadPath, "-target", "/"],
         {
-          stdio: "inherit",
+          stdio: envConfig.quiet ? "pipe" : "inherit",
         },
       );
 
@@ -204,9 +228,9 @@ async function install(): Promise<string> {
       }
       fs.symlinkSync("/usr/local/bin/hugo", symlinkPath);
     } else {
-      console.info("📦 Extracting...");
+      // All other platforms and macOS pre-0.153.0 (tar.gz) use archive extraction
+      logger.info("📦 Extracting...");
 
-      const archiveType = getArchiveType(releaseFile);
       if (archiveType === "zip") {
         const zip = new AdmZip(downloadPath);
         zip.extractAllTo(binDir, true);
@@ -223,9 +247,8 @@ async function install(): Promise<string> {
         fs.unlinkSync(downloadPath);
       } else {
         // Defensive: should not happen since unsupported platforms are caught earlier
-        // and pkg files are handled in the darwin branch above
         throw new Error(
-          `Unexpected archive type for ${releaseFile}. Expected .zip or .tar.gz for this platform.`,
+          `Unexpected archive type for ${releaseFile}. Expected .zip, .tar.gz, or .pkg.`,
         );
       }
 
@@ -235,14 +258,14 @@ async function install(): Promise<string> {
       }
     }
 
-    console.info("🎉 Hugo installed successfully!");
+    logger.info("🎉 Hugo installed successfully!");
 
     // Check version and return path
     const binPath = path.join(binDir, binFile);
-    console.info(getBinVersion(binPath));
+    logger.info(getBinVersion(binPath));
     return binPath;
   } catch (error) {
-    console.error("⛔ Hugo installation failed. :(");
+    logger.error("⛔ Hugo installation failed. :(");
     throw error;
   }
 }

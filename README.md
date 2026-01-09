@@ -212,6 +212,36 @@ Hugo Extended is automatically used on supported platforms:
 | Windows | ARM64 | ❌ (vanilla Hugo) |
 | FreeBSD | x64 | ❌ (vanilla Hugo) |
 
+## Environment Variables
+
+Customize installation and runtime behavior with these environment variables:
+
+| Variable | Description |
+|----------|-------------|
+| `HUGO_OVERRIDE_VERSION` | Install a specific Hugo version instead of the package version. Example: `HUGO_OVERRIDE_VERSION=0.139.0 npm install` |
+| `HUGO_NO_EXTENDED` | Force vanilla Hugo instead of Extended edition. Example: `HUGO_NO_EXTENDED=1 npm install` |
+| `HUGO_SKIP_DOWNLOAD` | Skip the postinstall binary download entirely. Useful for CI caching or Docker layer optimization. |
+| `HUGO_BIN_PATH` | Use a pre-existing Hugo binary instead of the bundled one. Example: `HUGO_BIN_PATH=/usr/local/bin/hugo` |
+| `HUGO_MIRROR_BASE_URL` | Download from a custom mirror instead of GitHub releases. Example: `HUGO_MIRROR_BASE_URL=https://mirror.example.com/hugo` |
+| `HUGO_SKIP_CHECKSUM` | Skip SHA-256 checksum verification. **Use with caution.** |
+| `HUGO_QUIET` | Suppress installation progress output. |
+
+### Examples
+
+```sh
+# Install a specific older version
+HUGO_OVERRIDE_VERSION=0.139.0 npm install hugo-extended
+
+# Skip download for CI caching (when binary is already cached)
+HUGO_SKIP_DOWNLOAD=1 npm ci
+
+# Use smaller vanilla Hugo (no SCSS support)
+HUGO_NO_EXTENDED=1 npm install hugo-extended
+
+# Use a corporate mirror
+HUGO_MIRROR_BASE_URL=https://internal.example.com/hugo npm install hugo-extended
+```
+
 ## Troubleshooting
 
 ### Hugo binary not found

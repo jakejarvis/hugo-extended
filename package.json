@@ -44,7 +44,7 @@
   "scripts": {
     "build": "tsdown",
     "dev": "tsdown --watch",
-    "generate-types": "tsx scripts/generate-types.ts",
+    "generate-types": "bun scripts/generate-types.ts",
     "lint": "biome check",
     "lint:fix": "biome check --write",
     "typecheck": "tsc --noEmit",
@@ -68,8 +68,7 @@
     "@types/tar": "^6.1.13",
     "@vitest/coverage-v8": "^4.0.16",
     "tinyexec": "^1.0.2",
-    "tsdown": "^0.19.0-beta.3",
-    "tsx": "^4.21.0",
+    "tsdown": "^0.19.0-beta.5",
     "typescript": "^5.9.3",
     "vitest": "^4.0.16"
   },

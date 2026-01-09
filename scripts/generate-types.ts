@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { x } from "tinyexec";
+
 import hugo from "../src/hugo";
 
 const OUT_DIR = "src/generated";
