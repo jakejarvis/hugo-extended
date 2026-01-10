@@ -1,7 +1,6 @@
 {
   "name": "hugo-extended",
-  "version": "0.154.3-sudoless.1",
-  "hugoVersion": "0.154.3",
+  "version": "0.154.4",
   "description": "✏️ Plug-and-play binary wrapper for Hugo Extended, the awesomest static-site generator.",
   "license": "MIT",
   "repository": {
