@@ -137,6 +137,18 @@ npm run test:coverage    # coverage via v8
 
 Some variables have aliases (e.g., `HUGO_FORCE_STANDARD` → `HUGO_NO_EXTENDED`, `HUGO_SILENT` → `HUGO_QUIET`). Check `ENV_VARS` in `src/lib/env.ts` for the full list.
 
+### Proxy support
+
+The installer automatically respects standard proxy environment variables via `undici`'s `EnvHttpProxyAgent`:
+
+| Variable | Description |
+|----------|-------------|
+| `HTTP_PROXY` / `http_proxy` | Proxy server for HTTP requests |
+| `HTTPS_PROXY` / `https_proxy` | Proxy server for HTTPS requests |
+| `NO_PROXY` / `no_proxy` | Comma-separated list of hosts to bypass proxy |
+
+Lowercase variants take precedence over uppercase (matching standard convention). The proxy URL is logged once during installation (respects `HUGO_QUIET`).
+
 ### Version-dependent behavior
 
 - **macOS v0.153.0+**: Hugo ships as `.pkg` installer, extracted locally using `pkgutil --expand-full` (no sudo required).

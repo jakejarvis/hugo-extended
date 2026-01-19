@@ -9,6 +9,7 @@ import { fileURLToPath } from "node:url";
 import AdmZip from "adm-zip";
 import * as tar from "tar";
 import { getEnvConfig } from "./env";
+import { proxyFetch } from "./fetch";
 import {
   getBinFilename,
   getBinVersion,
@@ -76,14 +77,17 @@ export function parseChecksumFile(content: string): Map<string, string> {
  * @returns A promise that resolves when the download is complete
  */
 async function downloadFile(url: string, dest: string): Promise<void> {
-  const response = await fetch(url);
+  const response = await proxyFetch(url);
   if (!response.ok) {
     throw new Error(`Failed to download ${url}: ${response.statusText}`);
   }
   if (!response.body) {
     throw new Error(`No response body from ${url}`);
   }
-  await pipeline(Readable.fromWeb(response.body), fs.createWriteStream(dest));
+  await pipeline(
+    Readable.fromWeb(response.body as Parameters<typeof Readable.fromWeb>[0]),
+    fs.createWriteStream(dest),
+  );
 }
 
 /**
@@ -149,7 +153,7 @@ async function verifyChecksum(
   checksumUrl: string,
   filename: string,
 ): Promise<void> {
-  const response = await fetch(checksumUrl);
+  const response = await proxyFetch(checksumUrl);
   if (!response.ok) {
     throw new Error(`Failed to download checksums: ${response.statusText}`);
   }
