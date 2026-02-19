@@ -6,7 +6,7 @@ describe("Type Safety", () => {
     // Check that specific commands are valid HugoCommand values
     expectTypeOf<"build">().toExtend<HugoCommand>();
     expectTypeOf<"server">().toExtend<HugoCommand>();
-    expectTypeOf<"new site">().toExtend<HugoCommand>();
+    expectTypeOf<"new project">().toExtend<HugoCommand>();
     expectTypeOf<"new theme">().toExtend<HugoCommand>();
     expectTypeOf<"new content">().toExtend<HugoCommand>();
   });
@@ -14,7 +14,7 @@ describe("Type Safety", () => {
   it("should map commands to correct option types", () => {
     type BuildOpts = HugoOptionsFor<"build">;
     type ServerOpts = HugoOptionsFor<"server">;
-    type NewSiteOpts = HugoOptionsFor<"new site">;
+    type NewProjectOpts = HugoOptionsFor<"new project">;
     type NewThemeOpts = HugoOptionsFor<"new theme">;
 
     // Build options should have minify
@@ -23,8 +23,8 @@ describe("Type Safety", () => {
     // Server options should have port
     expectTypeOf<ServerOpts>().toHaveProperty("port");
 
-    // New site options should have format
-    expectTypeOf<NewSiteOpts>().toHaveProperty("format");
+    // New project options should have format
+    expectTypeOf<NewProjectOpts>().toHaveProperty("format");
 
     // New theme options should have format
     expectTypeOf<NewThemeOpts>().toHaveProperty("format");

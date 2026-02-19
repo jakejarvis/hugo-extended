@@ -17,10 +17,10 @@ describe("New Commands Integration", () => {
     await rm(tempDir, { recursive: true, force: true });
   });
 
-  describe("new.site", () => {
-    it("should create a new site with default format", async () => {
+  describe("new.project", () => {
+    it("should create a new project with default format", async () => {
       const sitePath = join(tempDir, "test-site");
-      await hugo.new.site(sitePath);
+      await hugo.new.project(sitePath);
 
       // Check that essential directories exist
       await expect(
@@ -30,18 +30,18 @@ describe("New Commands Integration", () => {
       await expect(access(join(sitePath, "themes"))).resolves.toBeUndefined();
     });
 
-    it("should create a new site with yaml format", async () => {
+    it("should create a new project with yaml format", async () => {
       const sitePath = join(tempDir, "test-site-yaml");
-      await hugo.new.site(sitePath, { format: "yaml" });
+      await hugo.new.project(sitePath, { format: "yaml" });
 
       await expect(
         access(join(sitePath, "hugo.yaml")),
       ).resolves.toBeUndefined();
     });
 
-    it("should create a new site with json format", async () => {
+    it("should create a new project with json format", async () => {
       const sitePath = join(tempDir, "test-site-json");
-      await hugo.new.site(sitePath, { format: "json" });
+      await hugo.new.project(sitePath, { format: "json" });
 
       await expect(
         access(join(sitePath, "hugo.json")),
@@ -52,12 +52,12 @@ describe("New Commands Integration", () => {
       const sitePath = join(tempDir, "test-site-force");
 
       // Create site first time
-      await hugo.new.site(sitePath);
+      await hugo.new.project(sitePath);
 
       // Hugo 0.154.x does not overwrite an existing site config file, even with --force.
       // Future versions may change this behavior, so test accepts either outcome.
       try {
-        await hugo.new.site(sitePath, { force: true });
+        await hugo.new.project(sitePath, { force: true });
         // If it succeeds, verify the site still exists
         await expect(
           access(join(sitePath, "hugo.toml")),
@@ -72,7 +72,7 @@ describe("New Commands Integration", () => {
   describe("new.theme", () => {
     it("should create a new theme", async () => {
       const sitePath = join(tempDir, "test-site");
-      await hugo.new.site(sitePath);
+      await hugo.new.project(sitePath);
 
       // Use --source instead of process.chdir (not supported in worker threads)
       await hugo.new.theme("test-theme", { source: sitePath });
@@ -86,7 +86,7 @@ describe("New Commands Integration", () => {
 
     it("should create theme with yaml format", async () => {
       const sitePath = join(tempDir, "test-site");
-      await hugo.new.site(sitePath);
+      await hugo.new.project(sitePath);
 
       await hugo.new.theme("test-theme-yaml", {
         format: "yaml",
@@ -103,7 +103,7 @@ describe("New Commands Integration", () => {
   describe("new.content", () => {
     it("should create new content file", async () => {
       const sitePath = join(tempDir, "test-site");
-      await hugo.new.site(sitePath);
+      await hugo.new.project(sitePath);
 
       await hugo.new.content("posts/my-post.md", { source: sitePath });
 
@@ -113,7 +113,7 @@ describe("New Commands Integration", () => {
 
     it("should create content with custom kind", async () => {
       const sitePath = join(tempDir, "test-site");
-      await hugo.new.site(sitePath);
+      await hugo.new.project(sitePath);
 
       await hugo.new.content("pages/about.md", {
         kind: "page",

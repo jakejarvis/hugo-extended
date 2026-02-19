@@ -105,8 +105,8 @@ function findFlag(flags: FlagSpec[], propName: string): FlagSpec | undefined {
  * // Returns: ["server", "--port", "1313", "--build-drafts"]
  *
  * @example
- * buildArgs("new site", ["my-site"], { format: "yaml" })
- * // Returns: ["new", "site", "my-site", "--format", "yaml"]
+ * buildArgs("new project", ["my-site"], { format: "yaml" })
+ * // Returns: ["new", "project", "my-site", "--format", "yaml"]
  *
  * @example
  * buildArgs("build", undefined, { theme: ["a", "b"], minify: true })

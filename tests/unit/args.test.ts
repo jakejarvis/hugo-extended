@@ -16,8 +16,8 @@ describe("buildArgs", () => {
 
   describe("positional arguments", () => {
     it("should add positional arguments after command", () => {
-      const args = buildArgs("new site", ["my-site"]);
-      expect(args).toEqual(["new", "site", "my-site"]);
+      const args = buildArgs("new project", ["my-site"]);
+      expect(args).toEqual(["new", "project", "my-site"]);
     });
 
     it("should handle multiple positional arguments", () => {
@@ -26,8 +26,8 @@ describe("buildArgs", () => {
     });
 
     it("should handle positional args with options", () => {
-      const args = buildArgs("new site", ["my-site"], { format: "yaml" });
-      expect(args).toEqual(["new", "site", "my-site", "--format", "yaml"]);
+      const args = buildArgs("new project", ["my-site"], { format: "yaml" });
+      expect(args).toEqual(["new", "project", "my-site", "--format", "yaml"]);
     });
   });
 

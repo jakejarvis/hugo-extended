@@ -78,8 +78,8 @@ export const getHugoBinary = async (): Promise<string> => {
  *   baseURL: "http://localhost:1313"
  * });
  *
- * // Create a new site
- * await exec("new site", ["my-site"], { format: "yaml" });
+ * // Create a new project
+ * await exec("new project", ["my-site"], { format: "yaml" });
  *
  * // Build site for production
  * await exec("build", {
@@ -338,14 +338,14 @@ export const hugo = {
         }
         return exec("new content", pathOrOptions);
       },
-      site: (
-        pathOrOptions?: string | HugoOptionsFor<"new site">,
-        options?: HugoOptionsFor<"new site">,
+      project: (
+        pathOrOptions?: string | HugoOptionsFor<"new project">,
+        options?: HugoOptionsFor<"new project">,
       ) => {
         if (typeof pathOrOptions === "string") {
-          return exec("new site", [pathOrOptions], options);
+          return exec("new project", [pathOrOptions], options);
         }
-        return exec("new site", pathOrOptions);
+        return exec("new project", pathOrOptions);
       },
       theme: (
         nameOrOptions?: string | HugoOptionsFor<"new theme">,
