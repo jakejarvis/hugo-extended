@@ -68,7 +68,7 @@
     "@types/tar": "^6.1.13",
     "@vitest/coverage-v8": "^4.0.18",
     "tinyexec": "^1.0.2",
-    "tsdown": "^0.20.3",
+    "tsdown": "^0.21.0",
     "typescript": "^5.9.3",
     "vitest": "^4.0.18"
   },
