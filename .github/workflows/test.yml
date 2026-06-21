@@ -19,10 +19,10 @@ jobs:
         node: ["20", "22", "24"]
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # ratchet:actions/checkout@v7
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # ratchet:actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
           cache: "npm"
@@ -31,7 +31,7 @@ jobs:
         run: npm ci
 
       - name: Generate current platform binary package
-        run: npm run generate-binary-packages -- --set-github-env
+        run: npm run generate-packages -- --set-github-env
 
       - name: Generate types
         run: npm run generate-types
@@ -59,10 +59,10 @@ jobs:
         node: ["20", "22", "24"]
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # ratchet:actions/checkout@v7
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # ratchet:actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
           cache: "npm"
@@ -71,7 +71,7 @@ jobs:
         run: npm ci
 
       - name: Generate current platform binary package
-        run: npm run generate-binary-packages -- --set-github-env
+        run: npm run generate-packages -- --set-github-env
 
       - name: Generate types
         run: npm run generate-types
@@ -92,10 +92,10 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # ratchet:actions/checkout@v7
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # ratchet:actions/setup-node@v6
         with:
           node-version: "24"
           cache: "npm"
@@ -104,7 +104,7 @@ jobs:
         run: npm ci
 
       - name: Generate current platform binary package
-        run: npm run generate-binary-packages -- --set-github-env
+        run: npm run generate-packages -- --set-github-env
 
       - name: Generate types
         run: npm run generate-types
@@ -125,10 +125,10 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # ratchet:actions/checkout@v7
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # ratchet:actions/setup-node@v6
         with:
           node-version: "24"
           cache: "npm"
@@ -137,12 +137,39 @@ jobs:
         run: npm ci
 
       - name: Generate current platform binary package
-        run: npm run generate-binary-packages
+        run: npm run generate-packages
 
       - name: Install generated binary package
         shell: bash
         run: |
-          package_dir=$(find dist-platforms -mindepth 1 -maxdepth 1 -type d ! -name .downloads | head -n 1)
+          case "${RUNNER_OS}-${RUNNER_ARCH}" in
+            Linux-X64)
+              package_dir="dist-platforms/hugo-extended-linux-amd64"
+              ;;
+            Linux-ARM64)
+              package_dir="dist-platforms/hugo-extended-linux-arm64"
+              ;;
+            macOS-X64|macOS-ARM64)
+              package_dir="dist-platforms/hugo-extended-darwin-universal"
+              ;;
+            Windows-X64)
+              package_dir="dist-platforms/hugo-extended-windows-amd64"
+              ;;
+            Windows-ARM64)
+              package_dir="dist-platforms/hugo-windows-arm64"
+              ;;
+            *)
+              echo "::error::No binary package mapping for ${RUNNER_OS}/${RUNNER_ARCH}"
+              exit 1
+              ;;
+          esac
+
+          if [[ ! -d "$package_dir" ]]; then
+            echo "::error::Expected generated binary package at $package_dir"
+            find dist-platforms -mindepth 1 -maxdepth 1 -type d -print
+            exit 1
+          fi
+
           npm install --no-save --package-lock=false "$package_dir"
 
       - name: Generate types
@@ -154,11 +181,19 @@ jobs:
       - name: Verify package-resolved Hugo
         run: |
           node -e "
-            import('./dist/hugo.mjs').then(async (m) => {
+            Promise.all([import('./dist/hugo.mjs'), import('node:fs')]).then(async ([m, fs]) => {
+              const expected = JSON.parse(fs.readFileSync('package.json', 'utf8')).version;
               const bin = await m.default();
               console.log(bin);
               const { stdout } = await m.execWithOutput('version');
-              console.log(stdout.trim());
+              const versionOutput = stdout.trim();
+              console.log(versionOutput);
+
+              const match = versionOutput.match(/\bv([0-9]+\.[0-9]+\.[0-9]+)/);
+              const actual = match ? match[1] : null;
+              if (actual !== expected) {
+                throw new Error('Expected Hugo v' + expected + ', got ' + (actual || 'unparseable version') + ' from: ' + versionOutput);
+              }
             }).catch((error) => {
               console.error(error);
               process.exit(1);
@@ -171,10 +206,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # ratchet:actions/checkout@v7
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # ratchet:actions/setup-node@v6
         with:
           node-version: "24"
           cache: "npm"
@@ -183,7 +218,7 @@ jobs:
         run: npm ci
 
       - name: Generate current platform binary package
-        run: npm run generate-binary-packages
+        run: npm run generate-packages
 
       - name: Root package dry run
         run: npm pack --dry-run

@@ -6,7 +6,7 @@ import {
   getBinaryPackageBinPath,
   getBinaryPackageDir,
   parseChecksumFile,
-} from "../../scripts/generate-binary-packages";
+} from "../../scripts/generate-packages";
 import { getPlatformPackageByName, HUGO_PLATFORM_PACKAGES } from "../../src/lib/platform";
 
 describe("binary package generation", () => {

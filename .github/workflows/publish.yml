@@ -29,23 +29,23 @@ jobs:
             os: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # ratchet:actions/checkout@v7
         with:
           fetch-depth: 0
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # ratchet:actions/setup-node@v6
         with:
           node-version: "24"
           registry-url: "https://registry.npmjs.org"
 
       - name: Install dependencies
-        run: npm install -g npm@latest && npm ci
+        run: npm ci
 
       - name: Generate binary package
         env:
           PACKAGE_NAME: ${{ matrix.package_name }}
-        run: npm run generate-binary-packages -- --package "$PACKAGE_NAME" --pack-dry-run
+        run: npm run generate-packages -- --package "$PACKAGE_NAME" --pack-dry-run
 
       - name: Publish binary package
         env:
@@ -61,21 +61,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # ratchet:actions/checkout@v7
         with:
           fetch-depth: 0
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # ratchet:actions/setup-node@v6
         with:
           node-version: "24"
           registry-url: "https://registry.npmjs.org"
 
       - name: Install dependencies
-        run: npm install -g npm@latest && npm ci
+        run: npm ci
 
       - name: Generate current platform binary package
-        run: npm run generate-binary-packages -- --set-github-env
+        run: npm run generate-packages -- --set-github-env
 
       - name: Generate types
         run: npm run generate-types

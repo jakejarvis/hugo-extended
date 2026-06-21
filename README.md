@@ -40,14 +40,14 @@ These integrate seamlessly with Hugo's [built-in PostCSS pipes](https://gohugo.i
 
 The simplest way — just run `hugo` commands directly:
 
-```json
+```jsonc
 // package.json
 {
   "scripts": {
     "dev": "hugo server --buildDrafts",
     "build": "hugo --minify",
-    "build:preview": "hugo --baseURL \"${DEPLOY_PRIME_URL:-/}\" --buildDrafts --buildFuture"
-  }
+    "build:preview": "hugo --baseURL \"${DEPLOY_PRIME_URL:-/}\" --buildDrafts --buildFuture",
+  },
 }
 ```
 
@@ -232,11 +232,15 @@ HUGO_BIN_PATH=/usr/local/bin/hugo npm run build
 
 `hugo-extended` depends on platform-specific optional packages such as `@jakejarvis/hugo-extended-linux-amd64`. If you install with optional dependencies omitted, the wrapper cannot find its bundled Hugo binary.
 
+Reinstall with optional dependencies explicitly enabled. A plain install will not fix this if your environment or package-manager config is still omitting optional dependencies.
+
 ```sh
-npm install
+npm install --include=optional
+pnpm install --config.optional=true
+yarn config set ignore-optional false && yarn install
 ```
 
-If your environment intentionally omits optional dependencies, set `HUGO_BIN_PATH` to a compatible Hugo binary.
+If your environment intentionally omits optional dependencies, set `HUGO_BIN_PATH` to a compatible Hugo binary instead.
 
 ### macOS installation
 

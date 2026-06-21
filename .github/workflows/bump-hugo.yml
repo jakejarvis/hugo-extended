@@ -17,12 +17,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # ratchet:actions/checkout@v7
         with:
           fetch-depth: 0
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # ratchet:actions/setup-node@v6
         with:
           node-version: "24"
 
@@ -85,6 +85,10 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
+      - name: Install dependencies
+        if: steps.check.outputs.needs_update == 'true' && steps.pr_check.outputs.pr_exists == 'false'
+        run: npm ci --ignore-scripts --omit=optional
+
       - name: Create branch and bump version
         if: steps.check.outputs.needs_update == 'true' && steps.pr_check.outputs.pr_exists == 'false'
         run: |
@@ -97,11 +101,38 @@ jobs:
           # Use npm version to properly bump (updates package.json and package-lock.json)
           # --no-git-tag-version prevents creating a tag, we'll let the publish workflow handle that
           npm version "$LATEST" --no-git-tag-version
-          npm run sync-binary-package-versions
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+
+          const packageJsonPath = "package.json";
+          const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
+
+          if (!packageJson.optionalDependencies || Object.keys(packageJson.optionalDependencies).length === 0) {
+            throw new Error("package.json has no optionalDependencies to sync");
+          }
+
+          packageJson.optionalDependencies = Object.fromEntries(
+            Object.keys(packageJson.optionalDependencies).map((packageName) => [
+              packageName,
+              packageJson.version,
+            ]),
+          );
+
+          fs.writeFileSync(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`);
+          NODE
           npm install --package-lock-only --ignore-scripts
 
-          # Stage package files
-          git add package.json package-lock.json
+      - name: Generate current platform binary package
+        if: steps.check.outputs.needs_update == 'true' && steps.pr_check.outputs.pr_exists == 'false'
+        run: npm run generate-packages -- --set-github-env
+
+      - name: Regenerate Hugo spec and types
+        if: steps.check.outputs.needs_update == 'true' && steps.pr_check.outputs.pr_exists == 'false'
+        run: npm run generate-types
+
+      - name: Stage updated files
+        if: steps.check.outputs.needs_update == 'true' && steps.pr_check.outputs.pr_exists == 'false'
+        run: git add package.json package-lock.json
 
       - name: Commit and push
         if: steps.check.outputs.needs_update == 'true' && steps.pr_check.outputs.pr_exists == 'false'

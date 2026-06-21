@@ -29,7 +29,7 @@ Notes for LLM coding agents working on `hugo-extended`.
   - Extended packages use `hugo-extended-*` names only where upstream Hugo ships Extended.
   - Windows ARM64 uses the vanilla `@jakejarvis/hugo-windows-arm64` package.
 
-- **Binary package generation**: `scripts/generate-binary-packages.ts`
+- **Binary package generation**: `scripts/generate-packages.ts`
   - Downloads Hugo release assets and verifies SHA-256 checksums during release packaging.
   - **macOS v0.153.0+**: uses `pkgutil --expand-full` to extract the binary from the `.pkg` file, so the macOS package must be generated on macOS.
   - `.tar.gz` and `.zip` assets can be generated on Linux/macOS.
@@ -111,7 +111,7 @@ npm run test:coverage    # coverage via v8
   - Re-run `npm run generate-types` if the change depends on spec shape.
   - Prefer making tests match **the committed generated spec**, not an assumed kebab-case transform.
 
-- If you touch binary package generation (`scripts/generate-binary-packages.ts`):
+- If you touch binary package generation (`scripts/generate-packages.ts`):
   - macOS `.pkg` extraction requires macOS `pkgutil`.
   - Keep generated package manifests script-free.
   - Use exact package versions that match the root package/Hugo version.
