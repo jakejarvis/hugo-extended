@@ -87,9 +87,6 @@
     "@jakejarvis/hugo-windows-arm64": "0.163.3"
   },
   "engines": {
-    "node": "^20.19.0 || >=22.12.0"
-  },
-  "allowScripts": {
-    "fsevents@2.3.3": true
+    "node": ">=22.12.0"
   }
 }
