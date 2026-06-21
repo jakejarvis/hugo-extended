@@ -1,4 +1,5 @@
 import { describe, expectTypeOf, it } from "vitest";
+
 import type { HugoCommand, HugoOptionsFor } from "../../src/generated/types";
 
 describe("Type Safety", () => {

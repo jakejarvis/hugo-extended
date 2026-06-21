@@ -17,27 +17,28 @@ Notes for LLM coding agents working on `hugo-extended`.
 - **Public API**: `src/hugo.ts`
   - `default export`: callable function that returns the Hugo binary path **and** has builder methods attached.
   - Named exports:
-    - `getHugoBinary` (binary resolution + auto-install if missing)
+    - `getHugoBinary` (binary resolution via `HUGO_BIN_PATH` or platform package)
     - `exec` / `execWithOutput` (spawn Hugo with argv built from options)
     - `hugo` (builder object)
 
 - **CLI entry**: `src/cli.ts`
   - Resolves the binary path via the default export and forwards `process.argv.slice(2)` to Hugo.
 
-- **Binary installation**: `src/lib/install.ts`
-  - Downloads Hugo release assets and verifies SHA-256 checksums.
-  - **macOS v0.153.0+**: uses `pkgutil --expand-full` to extract the binary from the `.pkg` file (no sudo required).
-  - **macOS pre-v0.153.0**: extracts `.tar.gz` archive into `bin/`.
-  - **non-macOS**: extracts archive into `bin/` and `chmod +x`.
+- **Platform binary packages**: `src/lib/platform.ts`
+  - Maps supported platform/architecture pairs to exact optional npm packages under `@jakejarvis`.
+  - Extended packages use `hugo-extended-*` names only where upstream Hugo ships Extended.
+  - Windows ARM64 uses the vanilla `@jakejarvis/hugo-windows-arm64` package.
+
+- **Binary package generation**: `scripts/generate-packages.ts`
+  - Downloads Hugo release assets and verifies SHA-256 checksums during release packaging.
+  - **macOS v0.153.0+**: uses `pkgutil --expand-full` to extract the binary from the `.pkg` file, so the macOS package must be generated on macOS.
+  - `.tar.gz` and `.zip` assets can be generated on Linux/macOS.
+  - Emits publishable package directories in `dist-platforms/`.
 
 - **Environment variables**: `src/lib/env.ts`
-  - Centralized handling of all `HUGO_*` environment variables.
-  - Exports `getEnvConfig()` for reading parsed config, `logger` for quiet-aware logging.
+  - Centralized handling of `HUGO_BIN_PATH`.
+  - Exports `getEnvConfig()` for reading parsed config.
   - Exports `ENV_VAR_DOCS` for programmatic access to variable metadata.
-
-- **Postinstall**: `postinstall.js`
-  - For published packages (where `dist/` exists), runs the compiled installer.
-  - For repo/dev/CI (where `dist/` may not exist), exits successfully and skips installation.
 
 - **Argv builder**: `src/lib/args.ts`
   - Builds argv using `src/generated/flags.json` to understand flag kinds and canonical long names.
@@ -62,6 +63,8 @@ When bumping Hugo versions, **regenerate these files** and expect downstream cha
 - Which commands support which flags
 - Integration-test filesystem outputs (Hugo occasionally changes scaffolding)
 
+Normal test and publish CI validates the committed generated files; it does not regenerate them. The Hugo bump workflow is responsible for regenerating and staging `src/generated/types.ts` and `src/generated/flags.json`.
+
 ## Testing (concise)
 
 This repo uses **Vitest**.
@@ -83,8 +86,8 @@ npm run test:coverage    # coverage via v8
   - Fast, pure TS/JS (no Hugo execution).
   - Example: `tests/unit/args.test.ts` covers argv building behavior driven by `flags.json`.
   - Example: `tests/unit/types.test.ts` uses `expectTypeOf` to validate type surfaces.
-  - Example: `tests/unit/utils.test.ts` covers platform detection, release filename resolution.
-  - Example: `tests/unit/install.test.ts` covers checksum parsing, archive type detection.
+  - Example: `tests/unit/utils.test.ts` covers platform package detection and binary path resolution.
+  - Example: `tests/unit/platform.test.ts` covers generated package manifests, checksum parsing, and archive type detection.
 
 - `tests/integration/*`
   - Executes real Hugo commands and does real filesystem work in temp dirs.
@@ -92,8 +95,8 @@ npm run test:coverage    # coverage via v8
     - Prefer passing Hugo's global `--source` via `{ source: sitePath }`.
 
 - `tests/e2e/*`
-  - End-to-end tests for the full installation pipeline.
-  - Verifies binary installation, permissions, symlinks (macOS), and version matching.
+  - End-to-end tests for the resolved Hugo binary.
+  - Verifies binary presence, permissions, and version matching.
   - Platform-specific tests use `it.skipIf()` to skip on unsupported platforms.
 
 ### Integration test expectations to keep in mind
@@ -110,35 +113,25 @@ npm run test:coverage    # coverage via v8
   - Re-run `npm run generate-types` if the change depends on spec shape.
   - Prefer making tests match **the committed generated spec**, not an assumed kebab-case transform.
 
-- If you touch installation (`src/lib/install.ts` / `postinstall.js`):
-  - macOS install path uses `sudo installer` and will behave differently in CI/sandboxed environments.
-  - Tests are intentionally focused on the wrapper behavior, not on end-to-end installer reliability.
+- If you touch binary package generation (`scripts/generate-packages.ts`):
+  - macOS `.pkg` extraction requires macOS `pkgutil`.
+  - Keep generated package manifests script-free.
+  - Use exact package versions that match the root package/Hugo version.
 
 - If you touch exports in `src/hugo.ts`:
   - Remember: consumers rely on the **default export being callable** (binary path) and having builder methods attached.
 
 - If you touch environment variables (`src/lib/env.ts`):
-  - All env vars are defined in `ENV_VARS` with name, aliases, parse function, and description.
-  - Boolean env vars accept: `1`, `true`, `yes`, `on` (case-insensitive).
-  - Use `getEnvConfig()` to read config; use `logger.info/warn/error` for quiet-aware output.
-  - `postinstall.js` has its own minimal env parsing (can't import TypeScript modules).
+  - `HUGO_BIN_PATH` is the only supported runtime override.
+  - Use `getEnvConfig()` to read config.
 
 ## Environment variables reference
 
-| Variable | Type | Description |
-|----------|------|-------------|
-| `HUGO_OVERRIDE_VERSION` | string | Install a different Hugo version (ignores package.json) |
-| `HUGO_NO_EXTENDED` | boolean | Force vanilla Hugo instead of Extended |
-| `HUGO_SKIP_DOWNLOAD` | boolean | Skip postinstall binary download |
+| Variable        | Type   | Description                    |
+| --------------- | ------ | ------------------------------ |
 | `HUGO_BIN_PATH` | string | Use a pre-existing Hugo binary |
-| `HUGO_MIRROR_BASE_URL` | string | Custom download mirror URL |
-| `HUGO_SKIP_CHECKSUM` | boolean | Skip SHA-256 verification |
-| `HUGO_QUIET` | boolean | Suppress installation output |
-
-Some variables have aliases (e.g., `HUGO_FORCE_STANDARD` → `HUGO_NO_EXTENDED`, `HUGO_SILENT` → `HUGO_QUIET`). Check `ENV_VARS` in `src/lib/env.ts` for the full list.
 
 ### Version-dependent behavior
 
-- **macOS v0.153.0+**: Hugo ships as `.pkg` installer, extracted locally using `pkgutil --expand-full` (no sudo required).
-- **macOS pre-v0.153.0**: Hugo ships as `.tar.gz`, extracted to `bin/` directly.
-- The `usesMacOSPkg(version)` and `compareVersions(a, b)` utilities in `src/lib/utils.ts` handle this.
+- **macOS v0.153.0+**: Hugo ships as a `.pkg`; release packaging extracts it using `pkgutil --expand-full`.
+- Runtime code does not download or extract Hugo.

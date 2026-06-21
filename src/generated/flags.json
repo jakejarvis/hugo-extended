@@ -1,0 +1,1143 @@
+{
+  "globalFlags": [
+    {
+      "long": "--clock",
+      "typeToken": "string",
+      "kind": "string",
+      "description": "set the clock used by Hugo, e.g. --clock 2021-11-06T22:30:00.00+09:00"
+    },
+    {
+      "long": "--config",
+      "typeToken": "string",
+      "kind": "string",
+      "description": "config file",
+      "defaultRaw": "hugo.yaml|json|toml"
+    },
+    {
+      "long": "--configDir",
+      "typeToken": "string",
+      "kind": "string",
+      "description": "config dir",
+      "defaultRaw": "\"config\""
+    },
+    {
+      "long": "--destination",
+      "short": "-d",
+      "typeToken": "string",
+      "kind": "string",
+      "description": "filesystem path to write files to"
+    },
+    {
+      "long": "--environment",
+      "short": "-e",
+      "typeToken": "string",
+      "kind": "string",
+      "description": "build environment"
+    },
+    {
+      "long": "--ignoreVendorPaths",
+      "typeToken": "string",
+      "kind": "string",
+      "description": "ignores any _vendor for module paths matching the given Glob pattern"
+    },
+    {
+      "long": "--logLevel",
+      "typeToken": "string",
+      "kind": "string",
+      "description": "log level",
+      "enum": [
+        "debug",
+        "info",
+        "warn",
+        "error"
+      ]
+    },
+    {
+      "long": "--noBuildLock",
+      "kind": "boolean",
+      "description": "don't create .hugo_build.lock file"
+    },
+    {
+      "long": "--output",
+      "short": "-o",
+      "typeToken": "string",
+      "kind": "string",
+      "description": "filesystem path to write files to"
+    },
+    {
+      "long": "--quiet",
+      "kind": "boolean",
+      "description": "build in quiet mode"
+    },
+    {
+      "long": "--renderToMemory",
+      "short": "-M",
+      "kind": "boolean",
+      "description": "render to memory (mostly useful when running the server)"
+    },
+    {
+      "long": "--source",
+      "short": "-s",
+      "typeToken": "string",
+      "kind": "string",
+      "description": "filesystem path to read files relative from"
+    },
+    {
+      "long": "--themesDir",
+      "typeToken": "string",
+      "kind": "string",
+      "description": "filesystem path to themes directory"
+    },
+    {
+      "long": "--unsafe",
+      "kind": "boolean",
+      "description": "enable less safe operations, please backup first"
+    }
+  ],
+  "commands": [
+    {
+      "command": "build",
+      "flags": [
+        {
+          "long": "--baseURL",
+          "short": "-b",
+          "typeToken": "string",
+          "kind": "string",
+          "description": "hostname (and path) to the root, e.g. https://spf13.com/"
+        },
+        {
+          "long": "--buildDrafts",
+          "short": "-D",
+          "kind": "boolean",
+          "description": "include content marked as draft"
+        },
+        {
+          "long": "--buildExpired",
+          "short": "-E",
+          "kind": "boolean",
+          "description": "include expired content"
+        },
+        {
+          "long": "--buildFuture",
+          "short": "-F",
+          "kind": "boolean",
+          "description": "include content with publishdate in the future"
+        },
+        {
+          "long": "--cacheDir",
+          "typeToken": "string",
+          "kind": "string",
+          "description": "filesystem path to cache directory"
+        },
+        {
+          "long": "--cleanDestinationDir",
+          "kind": "boolean",
+          "description": "remove files from destination not found in static directories"
+        },
+        {
+          "long": "--contentDir",
+          "short": "-c",
+          "typeToken": "string",
+          "kind": "string",
+          "description": "filesystem path to content directory"
+        },
+        {
+          "long": "--disableKinds",
+          "typeToken": "strings",
+          "kind": "string[]",
+          "description": "disable different kind of pages (home, RSS etc.)"
+        },
+        {
+          "long": "--enableGitInfo",
+          "kind": "boolean",
+          "description": "add Git revision, date, author, and CODEOWNERS info to the pages"
+        },
+        {
+          "long": "--forceSyncStatic",
+          "kind": "boolean",
+          "description": "copy all files when static is changed."
+        },
+        {
+          "long": "--gc",
+          "kind": "boolean",
+          "description": "enable to run some cleanup tasks (remove unused cache files) after the build"
+        },
+        {
+          "long": "--ignoreCache",
+          "kind": "boolean",
+          "description": "ignore the configured file caches"
+        },
+        {
+          "long": "--layoutDir",
+          "short": "-l",
+          "typeToken": "string",
+          "kind": "string",
+          "description": "filesystem path to layout directory"
+        },
+        {
+          "long": "--minify",
+          "kind": "boolean",
+          "description": "minify any supported output format (HTML, XML etc.)"
+        },
+        {
+          "long": "--noChmod",
+          "kind": "boolean",
+          "description": "don't sync permission mode of files"
+        },
+        {
+          "long": "--noTimes",
+          "kind": "boolean",
+          "description": "don't sync modification time of files"
+        },
+        {
+          "long": "--panicOnWarning",
+          "kind": "boolean",
+          "description": "panic on first WARNING log"
+        },
+        {
+          "long": "--poll",
+          "typeToken": "string",
+          "kind": "string",
+          "description": "set this to a poll interval, e.g --poll 700ms, to use a poll based approach to watch for file system changes"
+        },
+        {
+          "long": "--printI18nWarnings",
+          "kind": "boolean",
+          "description": "print missing translations"
+        },
+        {
+          "long": "--printMemoryUsage",
+          "kind": "boolean",
+          "description": "print memory usage to screen at intervals"
+        },
+        {
+          "long": "--printPathWarnings",
+          "kind": "boolean",
+          "description": "print warnings on duplicate target paths etc."
+        },
+        {
+          "long": "--printUnusedTemplates",
+          "kind": "boolean",
+          "description": "print warnings on unused templates."
+        },
+        {
+          "long": "--renderSegments",
+          "typeToken": "strings",
+          "kind": "string[]",
+          "description": "named segments to render (configured in the segments config)"
+        },
+        {
+          "long": "--templateMetrics",
+          "kind": "boolean",
+          "description": "display metrics about template executions"
+        },
+        {
+          "long": "--templateMetricsHints",
+          "kind": "boolean",
+          "description": "calculate some improvement hints when combined with --templateMetrics"
+        },
+        {
+          "long": "--theme",
+          "short": "-t",
+          "typeToken": "strings",
+          "kind": "string[]",
+          "description": "themes to use (located in /themes/THEMENAME/)"
+        },
+        {
+          "long": "--trace",
+          "typeToken": "file",
+          "kind": "string",
+          "description": "write trace to file (not useful in general)"
+        },
+        {
+          "long": "--watch",
+          "short": "-w",
+          "kind": "boolean",
+          "description": "watch filesystem for changes and recreate as needed"
+        }
+      ]
+    },
+    {
+      "command": "completion",
+      "flags": []
+    },
+    {
+      "command": "completion bash",
+      "flags": [
+        {
+          "long": "--no-descriptions",
+          "kind": "boolean",
+          "description": "disable completion descriptions"
+        }
+      ]
+    },
+    {
+      "command": "completion fish",
+      "flags": [
+        {
+          "long": "--no-descriptions",
+          "kind": "boolean",
+          "description": "disable completion descriptions"
+        }
+      ]
+    },
+    {
+      "command": "completion powershell",
+      "flags": [
+        {
+          "long": "--no-descriptions",
+          "kind": "boolean",
+          "description": "disable completion descriptions"
+        }
+      ]
+    },
+    {
+      "command": "completion zsh",
+      "flags": [
+        {
+          "long": "--no-descriptions",
+          "kind": "boolean",
+          "description": "disable completion descriptions"
+        }
+      ]
+    },
+    {
+      "command": "config",
+      "flags": [
+        {
+          "long": "--baseURL",
+          "short": "-b",
+          "typeToken": "string",
+          "kind": "string",
+          "description": "hostname (and path) to the root, e.g. https://spf13.com/"
+        },
+        {
+          "long": "--cacheDir",
+          "typeToken": "string",
+          "kind": "string",
+          "description": "filesystem path to cache directory"
+        },
+        {
+          "long": "--contentDir",
+          "short": "-c",
+          "typeToken": "string",
+          "kind": "string",
+          "description": "filesystem path to content directory"
+        },
+        {
+          "long": "--format",
+          "typeToken": "string",
+          "kind": "string",
+          "description": "preferred file format (toml, yaml or json)",
+          "defaultRaw": "\"toml\""
+        },
+        {
+          "long": "--lang",
+          "typeToken": "string",
+          "kind": "string",
+          "description": "the language to display config for. Defaults to the first language defined."
+        },
+        {
+          "long": "--printZero",
+          "kind": "boolean",
+          "description": "include config options with zero values (e.g. false, 0, \"\") in the output"
+        },
+        {
+          "long": "--renderSegments",
+          "typeToken": "strings",
+          "kind": "string[]",
+          "description": "named segments to render (configured in the segments config)"
+        },
+        {
+          "long": "--theme",
+          "short": "-t",
+          "typeToken": "strings",
+          "kind": "string[]",
+          "description": "themes to use (located in /themes/THEMENAME/)"
+        }
+      ]
+    },
+    {
+      "command": "config mounts",
+      "flags": [
+        {
+          "long": "--baseURL",
+          "short": "-b",
+          "typeToken": "string",
+          "kind": "string",
+          "description": "hostname (and path) to the root, e.g. https://spf13.com/"
+        },
+        {
+          "long": "--cacheDir",
+          "typeToken": "string",
+          "kind": "string",
+          "description": "filesystem path to cache directory"
+        },
+        {
+          "long": "--contentDir",
+          "short": "-c",
+          "typeToken": "string",
+          "kind": "string",
+          "description": "filesystem path to content directory"
+        },
+        {
+          "long": "--renderSegments",
+          "typeToken": "strings",
+          "kind": "string[]",
+          "description": "named segments to render (configured in the segments config)"
+        },
+        {
+          "long": "--theme",
+          "short": "-t",
+          "typeToken": "strings",
+          "kind": "string[]",
+          "description": "themes to use (located in /themes/THEMENAME/)"
+        }
+      ]
+    },
+    {
+      "command": "convert",
+      "flags": []
+    },
+    {
+      "command": "convert toJSON",
+      "flags": []
+    },
+    {
+      "command": "convert toTOML",
+      "flags": []
+    },
+    {
+      "command": "convert toYAML",
+      "flags": []
+    },
+    {
+      "command": "env",
+      "flags": []
+    },
+    {
+      "command": "gen",
+      "flags": []
+    },
+    {
+      "command": "gen doc",
+      "flags": [
+        {
+          "long": "--dir",
+          "typeToken": "string",
+          "kind": "string",
+          "description": "the directory to write the doc.",
+          "defaultRaw": "\"/tmp/hugodoc/\""
+        }
+      ]
+    },
+    {
+      "command": "gen man",
+      "flags": [
+        {
+          "long": "--dir",
+          "typeToken": "string",
+          "kind": "string",
+          "description": "the directory to write the man pages.",
+          "defaultRaw": "\"man/\""
+        }
+      ]
+    },
+    {
+      "command": "help",
+      "flags": []
+    },
+    {
+      "command": "import",
+      "flags": []
+    },
+    {
+      "command": "import jekyll",
+      "flags": [
+        {
+          "long": "--force",
+          "kind": "boolean",
+          "description": "allow import into non-empty target directory"
+        }
+      ]
+    },
+    {
+      "command": "list",
+      "flags": []
+    },
+    {
+      "command": "list all",
+      "flags": []
+    },
+    {
+      "command": "list drafts",
+      "flags": []
+    },
+    {
+      "command": "list expired",
+      "flags": []
+    },
+    {
+      "command": "list future",
+      "flags": []
+    },
+    {
+      "command": "list published",
+      "flags": []
+    },
+    {
+      "command": "mod",
+      "flags": []
+    },
+    {
+      "command": "mod clean",
+      "flags": [
+        {
+          "long": "--all",
+          "kind": "boolean",
+          "description": "clean entire module cache"
+        },
+        {
+          "long": "--baseURL",
+          "short": "-b",
+          "typeToken": "string",
+          "kind": "string",
+          "description": "hostname (and path) to the root, e.g. https://spf13.com/"
+        },
+        {
+          "long": "--cacheDir",
+          "typeToken": "string",
+          "kind": "string",
+          "description": "filesystem path to cache directory"
+        },
+        {
+          "long": "--contentDir",
+          "short": "-c",
+          "typeToken": "string",
+          "kind": "string",
+          "description": "filesystem path to content directory"
+        },
+        {
+          "long": "--pattern",
+          "typeToken": "string",
+          "kind": "string",
+          "description": "pattern matching module paths to clean (all if not set), e.g. \"**hugo*\""
+        },
+        {
+          "long": "--renderSegments",
+          "typeToken": "strings",
+          "kind": "string[]",
+          "description": "named segments to render (configured in the segments config)"
+        },
+        {
+          "long": "--theme",
+          "short": "-t",
+          "typeToken": "strings",
+          "kind": "string[]",
+          "description": "themes to use (located in /themes/THEMENAME/)"
+        }
+      ]
+    },
+    {
+      "command": "mod get",
+      "flags": []
+    },
+    {
+      "command": "mod graph",
+      "flags": [
+        {
+          "long": "--baseURL",
+          "short": "-b",
+          "typeToken": "string",
+          "kind": "string",
+          "description": "hostname (and path) to the root, e.g. https://spf13.com/"
+        },
+        {
+          "long": "--cacheDir",
+          "typeToken": "string",
+          "kind": "string",
+          "description": "filesystem path to cache directory"
+        },
+        {
+          "long": "--clean",
+          "kind": "boolean",
+          "description": "delete module cache for dependencies that fail verification"
+        },
+        {
+          "long": "--contentDir",
+          "short": "-c",
+          "typeToken": "string",
+          "kind": "string",
+          "description": "filesystem path to content directory"
+        },
+        {
+          "long": "--renderSegments",
+          "typeToken": "strings",
+          "kind": "string[]",
+          "description": "named segments to render (configured in the segments config)"
+        },
+        {
+          "long": "--theme",
+          "short": "-t",
+          "typeToken": "strings",
+          "kind": "string[]",
+          "description": "themes to use (located in /themes/THEMENAME/)"
+        }
+      ]
+    },
+    {
+      "command": "mod init",
+      "flags": [
+        {
+          "long": "--baseURL",
+          "short": "-b",
+          "typeToken": "string",
+          "kind": "string",
+          "description": "hostname (and path) to the root, e.g. https://spf13.com/"
+        },
+        {
+          "long": "--cacheDir",
+          "typeToken": "string",
+          "kind": "string",
+          "description": "filesystem path to cache directory"
+        },
+        {
+          "long": "--contentDir",
+          "short": "-c",
+          "typeToken": "string",
+          "kind": "string",
+          "description": "filesystem path to content directory"
+        },
+        {
+          "long": "--renderSegments",
+          "typeToken": "strings",
+          "kind": "string[]",
+          "description": "named segments to render (configured in the segments config)"
+        },
+        {
+          "long": "--theme",
+          "short": "-t",
+          "typeToken": "strings",
+          "kind": "string[]",
+          "description": "themes to use (located in /themes/THEMENAME/)"
+        }
+      ]
+    },
+    {
+      "command": "mod npm",
+      "flags": []
+    },
+    {
+      "command": "mod npm pack",
+      "flags": [
+        {
+          "long": "--baseURL",
+          "short": "-b",
+          "typeToken": "string",
+          "kind": "string",
+          "description": "hostname (and path) to the root, e.g. https://spf13.com/"
+        },
+        {
+          "long": "--cacheDir",
+          "typeToken": "string",
+          "kind": "string",
+          "description": "filesystem path to cache directory"
+        },
+        {
+          "long": "--contentDir",
+          "short": "-c",
+          "typeToken": "string",
+          "kind": "string",
+          "description": "filesystem path to content directory"
+        },
+        {
+          "long": "--renderSegments",
+          "typeToken": "strings",
+          "kind": "string[]",
+          "description": "named segments to render (configured in the segments config)"
+        },
+        {
+          "long": "--theme",
+          "short": "-t",
+          "typeToken": "strings",
+          "kind": "string[]",
+          "description": "themes to use (located in /themes/THEMENAME/)"
+        }
+      ]
+    },
+    {
+      "command": "mod tidy",
+      "flags": [
+        {
+          "long": "--baseURL",
+          "short": "-b",
+          "typeToken": "string",
+          "kind": "string",
+          "description": "hostname (and path) to the root, e.g. https://spf13.com/"
+        },
+        {
+          "long": "--cacheDir",
+          "typeToken": "string",
+          "kind": "string",
+          "description": "filesystem path to cache directory"
+        },
+        {
+          "long": "--contentDir",
+          "short": "-c",
+          "typeToken": "string",
+          "kind": "string",
+          "description": "filesystem path to content directory"
+        },
+        {
+          "long": "--renderSegments",
+          "typeToken": "strings",
+          "kind": "string[]",
+          "description": "named segments to render (configured in the segments config)"
+        },
+        {
+          "long": "--theme",
+          "short": "-t",
+          "typeToken": "strings",
+          "kind": "string[]",
+          "description": "themes to use (located in /themes/THEMENAME/)"
+        }
+      ]
+    },
+    {
+      "command": "mod vendor",
+      "flags": [
+        {
+          "long": "--baseURL",
+          "short": "-b",
+          "typeToken": "string",
+          "kind": "string",
+          "description": "hostname (and path) to the root, e.g. https://spf13.com/"
+        },
+        {
+          "long": "--cacheDir",
+          "typeToken": "string",
+          "kind": "string",
+          "description": "filesystem path to cache directory"
+        },
+        {
+          "long": "--contentDir",
+          "short": "-c",
+          "typeToken": "string",
+          "kind": "string",
+          "description": "filesystem path to content directory"
+        },
+        {
+          "long": "--renderSegments",
+          "typeToken": "strings",
+          "kind": "string[]",
+          "description": "named segments to render (configured in the segments config)"
+        },
+        {
+          "long": "--theme",
+          "short": "-t",
+          "typeToken": "strings",
+          "kind": "string[]",
+          "description": "themes to use (located in /themes/THEMENAME/)"
+        }
+      ]
+    },
+    {
+      "command": "mod verify",
+      "flags": [
+        {
+          "long": "--baseURL",
+          "short": "-b",
+          "typeToken": "string",
+          "kind": "string",
+          "description": "hostname (and path) to the root, e.g. https://spf13.com/"
+        },
+        {
+          "long": "--cacheDir",
+          "typeToken": "string",
+          "kind": "string",
+          "description": "filesystem path to cache directory"
+        },
+        {
+          "long": "--clean",
+          "kind": "boolean",
+          "description": "delete module cache for dependencies that fail verification"
+        },
+        {
+          "long": "--contentDir",
+          "short": "-c",
+          "typeToken": "string",
+          "kind": "string",
+          "description": "filesystem path to content directory"
+        },
+        {
+          "long": "--renderSegments",
+          "typeToken": "strings",
+          "kind": "string[]",
+          "description": "named segments to render (configured in the segments config)"
+        },
+        {
+          "long": "--theme",
+          "short": "-t",
+          "typeToken": "strings",
+          "kind": "string[]",
+          "description": "themes to use (located in /themes/THEMENAME/)"
+        }
+      ]
+    },
+    {
+      "command": "new",
+      "flags": []
+    },
+    {
+      "command": "new content",
+      "flags": [
+        {
+          "long": "--baseURL",
+          "short": "-b",
+          "typeToken": "string",
+          "kind": "string",
+          "description": "hostname (and path) to the root, e.g. https://spf13.com/"
+        },
+        {
+          "long": "--cacheDir",
+          "typeToken": "string",
+          "kind": "string",
+          "description": "filesystem path to cache directory"
+        },
+        {
+          "long": "--contentDir",
+          "short": "-c",
+          "typeToken": "string",
+          "kind": "string",
+          "description": "filesystem path to content directory"
+        },
+        {
+          "long": "--editor",
+          "typeToken": "string",
+          "kind": "string",
+          "description": "edit new content with this editor, if provided"
+        },
+        {
+          "long": "--force",
+          "short": "-f",
+          "kind": "boolean",
+          "description": "overwrite file if it already exists"
+        },
+        {
+          "long": "--kind",
+          "short": "-k",
+          "typeToken": "string",
+          "kind": "string",
+          "description": "content type to create"
+        },
+        {
+          "long": "--renderSegments",
+          "typeToken": "strings",
+          "kind": "string[]",
+          "description": "named segments to render (configured in the segments config)"
+        },
+        {
+          "long": "--theme",
+          "short": "-t",
+          "typeToken": "strings",
+          "kind": "string[]",
+          "description": "themes to use (located in /themes/THEMENAME/)"
+        }
+      ]
+    },
+    {
+      "command": "new project",
+      "flags": [
+        {
+          "long": "--force",
+          "short": "-f",
+          "kind": "boolean",
+          "description": "init inside non-empty directory"
+        },
+        {
+          "long": "--format",
+          "typeToken": "string",
+          "kind": "string",
+          "description": "preferred file format (toml, yaml or json)",
+          "defaultRaw": "\"toml\""
+        }
+      ]
+    },
+    {
+      "command": "new theme",
+      "flags": [
+        {
+          "long": "--format",
+          "typeToken": "string",
+          "kind": "string",
+          "description": "preferred file format (toml, yaml or json)",
+          "defaultRaw": "\"toml\""
+        }
+      ]
+    },
+    {
+      "command": "server",
+      "flags": [
+        {
+          "long": "--appendPort",
+          "kind": "boolean",
+          "description": "append port to baseURL",
+          "defaultRaw": "true"
+        },
+        {
+          "long": "--baseURL",
+          "short": "-b",
+          "typeToken": "string",
+          "kind": "string",
+          "description": "hostname (and path) to the root, e.g. https://spf13.com/"
+        },
+        {
+          "long": "--bind",
+          "typeToken": "string",
+          "kind": "string",
+          "description": "interface to which the server will bind",
+          "defaultRaw": "\"127.0.0.1\""
+        },
+        {
+          "long": "--buildDrafts",
+          "short": "-D",
+          "kind": "boolean",
+          "description": "include content marked as draft"
+        },
+        {
+          "long": "--buildExpired",
+          "short": "-E",
+          "kind": "boolean",
+          "description": "include expired content"
+        },
+        {
+          "long": "--buildFuture",
+          "short": "-F",
+          "kind": "boolean",
+          "description": "include content with publishdate in the future"
+        },
+        {
+          "long": "--cacheDir",
+          "typeToken": "string",
+          "kind": "string",
+          "description": "filesystem path to cache directory"
+        },
+        {
+          "long": "--cleanDestinationDir",
+          "kind": "boolean",
+          "description": "remove files from destination not found in static directories"
+        },
+        {
+          "long": "--contentDir",
+          "short": "-c",
+          "typeToken": "string",
+          "kind": "string",
+          "description": "filesystem path to content directory"
+        },
+        {
+          "long": "--disableBrowserError",
+          "kind": "boolean",
+          "description": "do not show build errors in the browser"
+        },
+        {
+          "long": "--disableFastRender",
+          "kind": "boolean",
+          "description": "enables full re-renders on changes"
+        },
+        {
+          "long": "--disableKinds",
+          "typeToken": "strings",
+          "kind": "string[]",
+          "description": "disable different kind of pages (home, RSS etc.)"
+        },
+        {
+          "long": "--disableLiveReload",
+          "kind": "boolean",
+          "description": "watch without enabling live browser reload on rebuild"
+        },
+        {
+          "long": "--enableGitInfo",
+          "kind": "boolean",
+          "description": "add Git revision, date, author, and CODEOWNERS info to the pages"
+        },
+        {
+          "long": "--forceSyncStatic",
+          "kind": "boolean",
+          "description": "copy all files when static is changed."
+        },
+        {
+          "long": "--gc",
+          "kind": "boolean",
+          "description": "enable to run some cleanup tasks (remove unused cache files) after the build"
+        },
+        {
+          "long": "--ignoreCache",
+          "kind": "boolean",
+          "description": "ignore the configured file caches"
+        },
+        {
+          "long": "--layoutDir",
+          "short": "-l",
+          "typeToken": "string",
+          "kind": "string",
+          "description": "filesystem path to layout directory"
+        },
+        {
+          "long": "--liveReloadPort",
+          "typeToken": "int",
+          "kind": "number",
+          "description": "port for live reloading (i.e. 443 in HTTPS proxy situations)",
+          "defaultRaw": "-1"
+        },
+        {
+          "long": "--minify",
+          "kind": "boolean",
+          "description": "minify any supported output format (HTML, XML etc.)"
+        },
+        {
+          "long": "--navigateToChanged",
+          "short": "-N",
+          "kind": "boolean",
+          "description": "navigate to changed content file on live browser reload"
+        },
+        {
+          "long": "--noChmod",
+          "kind": "boolean",
+          "description": "don't sync permission mode of files"
+        },
+        {
+          "long": "--noHTTPCache",
+          "kind": "boolean",
+          "description": "disable browser caching of pages served by the embedded web server"
+        },
+        {
+          "long": "--noTimes",
+          "kind": "boolean",
+          "description": "don't sync modification time of files"
+        },
+        {
+          "long": "--openBrowser",
+          "short": "-O",
+          "kind": "boolean",
+          "description": "open the project in a browser after server startup"
+        },
+        {
+          "long": "--panicOnWarning",
+          "kind": "boolean",
+          "description": "panic on first WARNING log"
+        },
+        {
+          "long": "--poll",
+          "typeToken": "string",
+          "kind": "string",
+          "description": "set this to a poll interval, e.g --poll 700ms, to use a poll based approach to watch for file system changes"
+        },
+        {
+          "long": "--port",
+          "short": "-p",
+          "typeToken": "int",
+          "kind": "number",
+          "description": "port on which the server will listen",
+          "defaultRaw": "1313"
+        },
+        {
+          "long": "--pprof",
+          "kind": "boolean",
+          "description": "enable the pprof server (port 8080)"
+        },
+        {
+          "long": "--printI18nWarnings",
+          "kind": "boolean",
+          "description": "print missing translations"
+        },
+        {
+          "long": "--printMemoryUsage",
+          "kind": "boolean",
+          "description": "print memory usage to screen at intervals"
+        },
+        {
+          "long": "--printPathWarnings",
+          "kind": "boolean",
+          "description": "print warnings on duplicate target paths etc."
+        },
+        {
+          "long": "--printUnusedTemplates",
+          "kind": "boolean",
+          "description": "print warnings on unused templates."
+        },
+        {
+          "long": "--renderSegments",
+          "typeToken": "strings",
+          "kind": "string[]",
+          "description": "named segments to render (configured in the segments config)"
+        },
+        {
+          "long": "--renderStaticToDisk",
+          "kind": "boolean",
+          "description": "serve static files from disk and dynamic files from memory"
+        },
+        {
+          "long": "--templateMetrics",
+          "kind": "boolean",
+          "description": "display metrics about template executions"
+        },
+        {
+          "long": "--templateMetricsHints",
+          "kind": "boolean",
+          "description": "calculate some improvement hints when combined with --templateMetrics"
+        },
+        {
+          "long": "--theme",
+          "short": "-t",
+          "typeToken": "strings",
+          "kind": "string[]",
+          "description": "themes to use (located in /themes/THEMENAME/)"
+        },
+        {
+          "long": "--tlsAuto",
+          "kind": "boolean",
+          "description": "generate and use locally-trusted certificates."
+        },
+        {
+          "long": "--tlsCertFile",
+          "typeToken": "string",
+          "kind": "string",
+          "description": "path to TLS certificate file"
+        },
+        {
+          "long": "--tlsKeyFile",
+          "typeToken": "string",
+          "kind": "string",
+          "description": "path to TLS key file"
+        },
+        {
+          "long": "--trace",
+          "typeToken": "file",
+          "kind": "string",
+          "description": "write trace to file (not useful in general)"
+        },
+        {
+          "long": "--watch",
+          "short": "-w",
+          "kind": "boolean",
+          "description": "watch filesystem for changes and recreate as needed",
+          "defaultRaw": "true"
+        }
+      ]
+    },
+    {
+      "command": "server trust",
+      "flags": [
+        {
+          "long": "--uninstall",
+          "kind": "boolean",
+          "description": "Uninstall the local CA (but do not delete it)."
+        }
+      ]
+    },
+    {
+      "command": "version",
+      "flags": []
+    }
+  ]
+}

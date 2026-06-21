@@ -10,38 +10,33 @@ permissions:
   contents: read
 
 jobs:
-  # Fast unit tests - run first to catch basic issues quickly
   unit:
     name: Unit Tests (Node ${{ matrix.node }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        node: ["20", "22", "24"]
+        node: [22, 24, 26]
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+        with:
+          persist-credentials: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
         with:
           node-version: ${{ matrix.node }}
           cache: "npm"
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-
       - name: Install dependencies
         run: npm ci
-
-      - name: Generate types
-        run: npm run generate-types
 
       - name: Lint
         run: npm run lint
 
       - name: Type check
-        run: npm run typecheck
+        run: npm run check-types
 
       - name: Build
         run: npm run build
@@ -49,7 +44,6 @@ jobs:
       - name: Run unit tests
         run: npm run test:unit
 
-  # Integration tests - run Hugo commands on each platform
   integration:
     name: Integration (${{ matrix.os }}, Node ${{ matrix.node }})
     needs: unit
@@ -58,25 +52,24 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        node: ["20", "22", "24"]
+        node: [22, 24, 26]
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+        with:
+          persist-credentials: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
         with:
           node-version: ${{ matrix.node }}
           cache: "npm"
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-
       - name: Install dependencies
         run: npm ci
 
-      - name: Generate types
-        run: npm run generate-types
+      - name: Generate current platform binary package
+        run: npm run generate-packages -- --set-github-env
 
       - name: Build
         run: npm run build
@@ -84,9 +77,8 @@ jobs:
       - name: Run integration tests
         run: npm run test:integration
 
-  # E2E installation tests - verify the full installation pipeline
   e2e:
-    name: E2E Installation (${{ matrix.os }})
+    name: E2E Binary Package (${{ matrix.os }})
     needs: unit
     runs-on: ${{ matrix.os }}
     strategy:
@@ -95,22 +87,21 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+        with:
+          persist-credentials: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
         with:
-          node-version: "24"
+          node-version: 24
           cache: "npm"
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Generate types
-        run: npm run generate-types
+      - name: Generate current platform binary package
+        run: npm run generate-packages -- --set-github-env
 
       - name: Build
         run: npm run build
@@ -118,9 +109,8 @@ jobs:
       - name: Run E2E tests
         run: npm run test:e2e
 
-  # Fresh installation test - simulates a user installing the package
-  fresh-install:
-    name: Fresh Install (${{ matrix.os }})
+  package-resolution:
+    name: Package Resolution (${{ matrix.os }})
     needs: unit
     runs-on: ${{ matrix.os }}
     strategy:
@@ -129,341 +119,113 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+        with:
+          persist-credentials: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
         with:
-          node-version: "24"
+          node-version: 24
           cache: "npm"
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Generate types
-        run: npm run generate-types
+      - name: Generate current platform binary package
+        run: npm run generate-packages
+
+      - name: Install generated binary package
+        shell: bash
+        run: |
+          case "${RUNNER_OS}-${RUNNER_ARCH}" in
+            Linux-X64)
+              package_dir="./dist-platforms/hugo-extended-linux-amd64"
+              ;;
+            Linux-ARM64)
+              package_dir="./dist-platforms/hugo-extended-linux-arm64"
+              ;;
+            macOS-X64|macOS-ARM64)
+              package_dir="./dist-platforms/hugo-extended-darwin-universal"
+              ;;
+            Windows-X64)
+              package_dir="./dist-platforms/hugo-extended-windows-amd64"
+              ;;
+            Windows-ARM64)
+              package_dir="./dist-platforms/hugo-windows-arm64"
+              ;;
+            *)
+              echo "::error::No binary package mapping for ${RUNNER_OS}/${RUNNER_ARCH}"
+              exit 1
+              ;;
+          esac
+
+          if [[ ! -d "$package_dir" ]]; then
+            echo "::error::Expected generated binary package at $package_dir"
+            find dist-platforms -mindepth 1 -maxdepth 1 -type d -print
+            exit 1
+          fi
+
+          npm install --no-save --package-lock=false "$package_dir"
 
       - name: Build
         run: npm run build
 
-      - name: Remove any pre-existing Hugo binary
-        shell: bash
-        run: rm -rf bin/
-
-      - name: Verify bin directory is empty
-        shell: bash
-        run: |
-          if [ -d "bin" ]; then
-            echo "bin/ directory still exists!"
-            ls -la bin/
-            exit 1
-          fi
-          echo "bin/ directory confirmed empty"
-
-      - name: Run postinstall to trigger fresh install
-        run: node postinstall.js
-
-      - name: Verify Hugo binary exists (Unix)
-        if: runner.os != 'Windows'
-        run: |
-          if [ ! -f "bin/hugo" ]; then
-            echo "Hugo binary not found!"
-            exit 1
-          fi
-          echo "Hugo binary found at bin/hugo"
-          ls -la bin/
-
-      - name: Verify Hugo binary exists (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          if (-not (Test-Path "bin/hugo.exe")) {
-            Write-Error "Hugo binary not found!"
-            exit 1
-          }
-          Write-Host "Hugo binary found at bin/hugo.exe"
-          Get-ChildItem bin/
-
-      - name: Verify Hugo version matches package version
-        shell: bash
-        run: |
-          PKG_VERSION=$(node -p "require('./package.json').version")
-          if [[ "$RUNNER_OS" == "Windows" ]]; then
-            HUGO_VERSION=$(./bin/hugo.exe version)
-          else
-            HUGO_VERSION=$(./bin/hugo version)
-          fi
-          echo "Package version: $PKG_VERSION"
-          echo "Hugo version: $HUGO_VERSION"
-          if [[ "$HUGO_VERSION" != *"v$PKG_VERSION"* ]]; then
-            echo "Version mismatch!"
-            exit 1
-          fi
-          echo "Version verified successfully"
-
-      - name: Verify Extended version (where supported)
-        shell: bash
-        run: |
-          if [[ "$RUNNER_OS" == "Windows" ]]; then
-            HUGO_VERSION=$(./bin/hugo.exe version)
-          else
-            HUGO_VERSION=$(./bin/hugo version)
-          fi
-          # Extended is supported on all GitHub Actions runners (x64)
-          if [[ "$HUGO_VERSION" != *"+extended"* ]]; then
-            echo "Expected Extended version but got: $HUGO_VERSION"
-            exit 1
-          fi
-          echo "Extended version verified"
-
-  # macOS-specific tests (pkg extraction via pkgutil, no sudo required)
-  macos-quirks:
-    name: macOS quirks
-    needs: unit
-    runs-on: macos-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: "24"
-          cache: "npm"
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Generate types
-        run: npm run generate-types
-
-      - name: Build
-        run: npm run build
-
-      - name: Remove any pre-existing Hugo binary
-        run: rm -rf bin/
-
-      - name: Run postinstall
-        run: node postinstall.js
-
-      - name: Verify binary is regular file (not symlink)
-        run: |
-          if [ -L "bin/hugo" ]; then
-            echo "bin/hugo should not be a symlink (we use pkgutil extraction now)!"
-            exit 1
-          fi
-          if [ ! -f "bin/hugo" ]; then
-            echo "bin/hugo is not a regular file!"
-            exit 1
-          fi
-          echo "Binary is a regular file (extracted from .pkg via pkgutil)"
-
-      - name: Verify executable permissions
-        run: |
-          if [ ! -x "bin/hugo" ]; then
-            echo "bin/hugo is not executable!"
-            exit 1
-          fi
-          echo "Permissions verified"
-
-      - name: Verify binary runs
-        run: ./bin/hugo version
-
-  # Linux- tests (tar.gz extraction, permissions)
-  linux-quirks:
-    name: Linux quirks
-    needs: unit
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: "24"
-          cache: "npm"
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Generate types
-        run: npm run generate-types
-
-      - name: Build
-        run: npm run build
-
-      - name: Remove any pre-existing Hugo binary
-        run: rm -rf bin/
-
-      - name: Run postinstall
-        run: node postinstall.js
-
-      - name: Verify binary is regular file (not symlink)
-        run: |
-          if [ -L "bin/hugo" ]; then
-            echo "bin/hugo should not be a symlink on Linux!"
-            exit 1
-          fi
-          if [ ! -f "bin/hugo" ]; then
-            echo "bin/hugo is not a regular file!"
-            exit 1
-          fi
-          echo "Binary is a regular file"
-
-      - name: Verify executable permissions
-        run: |
-          if [ ! -x "bin/hugo" ]; then
-            echo "bin/hugo is not executable!"
-            exit 1
-          fi
-          PERMS=$(stat -c "%a" bin/hugo)
-          echo "Permissions: $PERMS"
-          # Should have at least 755 (owner rwx, group rx, others rx)
-          if [ "$PERMS" -lt "755" ]; then
-            echo "Insufficient permissions!"
-            exit 1
-          fi
-          echo "Permissions verified"
-
-      - name: Verify binary runs
-        run: ./bin/hugo version
-
-  # Windows- tests (zip extraction)
-  windows-quirks:
-    name: Windows quirks
-    needs: unit
-    runs-on: windows-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: "24"
-          cache: "npm"
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Generate types
-        run: npm run generate-types
-
-      - name: Build
-        run: npm run build
-
-      - name: Remove any pre-existing Hugo binary
-        shell: pwsh
-        run: |
-          if (Test-Path "bin") {
-            Remove-Item -Recurse -Force "bin"
-          }
-
-      - name: Run postinstall
-        run: node postinstall.js
-
-      - name: Verify binary exists with correct extension
-        shell: pwsh
-        run: |
-          if (-not (Test-Path "bin/hugo.exe")) {
-            Write-Error "bin/hugo.exe not found!"
-            exit 1
-          }
-          Write-Host "Binary found: bin/hugo.exe"
-          Get-ChildItem bin/
-
-      - name: Verify binary runs
-        run: ./bin/hugo.exe version
-
-  # Re-installation test - simulates the "Hugo disappeared" recovery path
-  reinstall:
-    name: Re-installation Recovery (${{ matrix.os }})
-    needs: unit
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: "24"
-          cache: "npm"
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Generate types
-        run: npm run generate-types
-
-      - name: Build
-        run: npm run build
-
-      - name: Initial install
-        run: node postinstall.js
-
-      - name: Verify initial install (Unix)
-        if: runner.os != 'Windows'
-        run: ./bin/hugo version
-
-      - name: Verify initial install (Windows)
-        if: runner.os == 'Windows'
-        run: ./bin/hugo.exe version
-
-      - name: Remove Hugo binary to simulate disappearance
-        shell: bash
-        run: rm -rf bin/
-
-      - name: Run Node.js script that triggers auto-reinstall
+      - name: Verify package-resolved Hugo
         run: |
           node -e "
-            import('./dist/hugo.mjs').then(async (m) => {
-              const path = await m.default();
-              console.log('Hugo reinstalled at:', path);
-              const { execWithOutput } = m;
-              const { stdout } = await execWithOutput('version');
-              console.log('Version:', stdout.trim());
-            }).catch(e => {
-              console.error('Failed:', e);
+            Promise.all([import('./dist/hugo.mjs'), import('node:fs')]).then(async ([m, fs]) => {
+              const expected = JSON.parse(fs.readFileSync('package.json', 'utf8')).version;
+              const bin = await m.default();
+              console.log(bin);
+              const { stdout } = await m.execWithOutput('version');
+              const versionOutput = stdout.trim();
+              console.log(versionOutput);
+
+              const match = versionOutput.match(/\bv([0-9]+\.[0-9]+\.[0-9]+)/);
+              const actual = match ? match[1] : null;
+              if (actual !== expected) {
+                throw new Error('Expected Hugo v' + expected + ', got ' + (actual || 'unparseable version') + ' from: ' + versionOutput);
+              }
+            }).catch((error) => {
+              console.error(error);
               process.exit(1);
             });
           "
 
-      - name: Verify Hugo was reinstalled (Unix)
-        if: runner.os != 'Windows'
+  pack:
+    name: Pack Dry Run
+    needs: unit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
+        with:
+          node-version: 24
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate current platform binary package
+        run: npm run generate-packages
+
+      - name: Root package dry run
+        run: npm pack --dry-run
+
+      - name: Binary package dry run
+        shell: bash
         run: |
-          if [ ! -f "bin/hugo" ]; then
-            echo "Hugo was not reinstalled!"
+          package_dir="./dist-platforms/hugo-extended-linux-amd64"
+          if [[ ! -d "$package_dir" ]]; then
+            echo "::error::Expected generated binary package at $package_dir"
+            find dist-platforms -mindepth 1 -maxdepth 1 -type d -print
             exit 1
           fi
-          ./bin/hugo version
 
-      - name: Verify Hugo was reinstalled (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          if (-not (Test-Path "bin/hugo.exe")) {
-            Write-Error "Hugo was not reinstalled!"
-            exit 1
-          }
-          ./bin/hugo.exe version
+          npm pack --dry-run "$package_dir"

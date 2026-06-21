@@ -2,8 +2,7 @@ node_modules/
 npm-debug.log*
 *.tsbuildinfo
 dist/
-bin/
-src/generated/
+dist-platforms/
 mysite/
 coverage/
 .vitest-cache/

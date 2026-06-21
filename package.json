@@ -2,30 +2,36 @@
   "name": "hugo-extended",
   "version": "0.163.3",
   "description": "✏️ Plug-and-play binary wrapper for Hugo Extended, the awesomest static-site generator.",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/jakejarvis/hugo-extended.git"
-  },
+  "keywords": [
+    "cli",
+    "gohugoio",
+    "hugo",
+    "hugo-extended"
+  ],
   "bugs": {
     "url": "https://github.com/jakejarvis/hugo-extended/issues"
   },
+  "license": "MIT",
   "author": {
     "name": "Jake Jarvis",
     "email": "jake@jarv.is",
     "url": "https://github.com/jakejarvis"
   },
-  "publishConfig": {
-    "access": "public"
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jakejarvis/hugo-extended.git"
   },
-  "type": "module",
-  "main": "./dist/hugo.mjs",
-  "module": "./dist/hugo.mjs",
-  "types": "./dist/hugo.d.mts",
   "bin": {
     "hugo": "dist/cli.mjs",
     "hugo-extended": "dist/cli.mjs"
   },
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "main": "./dist/hugo.mjs",
+  "module": "./dist/hugo.mjs",
+  "types": "./dist/hugo.d.mts",
   "exports": {
     ".": {
       "types": "./dist/hugo.d.mts",
@@ -37,61 +43,49 @@
       "default": "./dist/generated/types.mjs"
     }
   },
-  "files": [
-    "dist",
-    "postinstall.js"
-  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsdown",
     "dev": "tsdown --watch",
-    "generate-types": "bun scripts/generate-types.ts",
-    "lint": "biome check",
-    "lint:fix": "biome check --write",
-    "typecheck": "tsc --noEmit",
+    "generate-types": "npx jiti scripts/generate-types.ts",
+    "generate-packages": "npx jiti scripts/generate-packages.ts",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "fmt": "oxfmt",
+    "fmt:check": "oxfmt --check",
+    "check-types": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:unit": "vitest run tests/unit",
     "test:integration": "vitest run tests/integration",
     "test:e2e": "vitest run tests/e2e",
-    "test:coverage": "vitest run --coverage",
-    "postinstall": "node postinstall.js",
-    "prepublishOnly": "npm run generate-types && npm run build"
-  },
-  "dependencies": {
-    "adm-zip": "^0.5.17",
-    "tar": "^7.5.15"
+    "test:coverage": "vitest run --coverage"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.4.15",
     "@types/adm-zip": "^0.5.8",
-    "@types/node": "^25.9.1",
+    "@types/node": "^26.0.0",
     "@types/tar": "^6.1.13",
-    "@vitest/coverage-v8": "^4.1.7",
-    "tinyexec": "^1.2.2",
-    "tsdown": "^0.22.0",
+    "@vitest/coverage-v8": "^4.1.9",
+    "adm-zip": "^0.5.17",
+    "jiti": "^2.7.0",
+    "oxfmt": "^0.55.0",
+    "oxlint": "^1.70.0",
+    "tar": "^7.5.16",
+    "tinyexec": "^1.2.4",
+    "tsdown": "^0.22.3",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.7"
+    "vitest": "^4.1.9"
+  },
+  "optionalDependencies": {
+    "@jakejarvis/hugo-extended-darwin-universal": "0.163.3",
+    "@jakejarvis/hugo-extended-linux-amd64": "0.163.3",
+    "@jakejarvis/hugo-extended-linux-arm64": "0.163.3",
+    "@jakejarvis/hugo-extended-windows-amd64": "0.163.3",
+    "@jakejarvis/hugo-windows-arm64": "0.163.3"
   },
   "engines": {
-    "node": ">=18.17"
-  },
-  "keywords": [
-    "hugo",
-    "hugo extended",
-    "gohugoio",
-    "cli",
-    "front-end",
-    "bin",
-    "binary",
-    "wrapper",
-    "static site generator",
-    "static-site",
-    "ssg",
-    "static",
-    "markdown",
-    "blog",
-    "frontmatter",
-    "go",
-    "golang"
-  ]
+    "node": ">=22.12.0"
+  }
 }

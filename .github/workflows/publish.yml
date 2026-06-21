@@ -10,35 +10,77 @@ permissions:
   contents: read
 
 jobs:
-  npm:
-    name: Publish to NPM
-    runs-on: ubuntu-latest
+  binary-packages:
+    name: Publish ${{ matrix.package_name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - package_name: "@jakejarvis/hugo-extended-darwin-universal"
+            os: macos-latest
+          - package_name: "@jakejarvis/hugo-extended-linux-amd64"
+            os: ubuntu-latest
+          - package_name: "@jakejarvis/hugo-extended-linux-arm64"
+            os: ubuntu-latest
+          - package_name: "@jakejarvis/hugo-extended-windows-amd64"
+            os: ubuntu-latest
+          - package_name: "@jakejarvis/hugo-windows-arm64"
+            os: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
         with:
           fetch-depth: 0
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
         with:
-          node-version: "24"
+          node-version: 24
           registry-url: "https://registry.npmjs.org"
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+          package-manager-cache: false
 
       - name: Install dependencies
-        run: npm install -g npm@latest && npm ci
+        run: npm ci
 
-      - name: Generate types
-        run: npm run generate-types
+      - name: Generate binary package
+        env:
+          PACKAGE_NAME: ${{ matrix.package_name }}
+        run: npm run generate-packages -- --package "$PACKAGE_NAME" --pack-dry-run
+
+      - name: Publish binary package
+        env:
+          PACKAGE_NAME: ${{ matrix.package_name }}
+        shell: bash
+        run: |
+          package_dir="dist-platforms/${PACKAGE_NAME#@jakejarvis/}"
+          npm publish "$package_dir" --access public
+
+  main-package:
+    name: Publish hugo-extended
+    needs: binary-packages
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
+        with:
+          node-version: 24
+          registry-url: "https://registry.npmjs.org"
+          package-manager-cache: false
+
+      - name: Install dependencies
+        run: npm ci
 
       - name: Lint
         run: npm run lint
 
       - name: Type check
-        run: npm run typecheck
+        run: npm run check-types
 
       - name: Build
         run: npm run build

@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const currentDir = path.dirname(fileURLToPath(import.meta.url));
 
 /**
  * Flag specification loaded from the generated spec.json file.
@@ -43,7 +43,7 @@ let cachedSpec: HugoSpec | null = null;
 function loadSpec(): HugoSpec {
   if (cachedSpec) return cachedSpec;
 
-  const specPath = path.join(__dirname, "..", "generated", "flags.json");
+  const specPath = path.join(currentDir, "..", "generated", "flags.json");
   try {
     const specText = fs.readFileSync(specPath, "utf8");
     cachedSpec = JSON.parse(specText) as HugoSpec;
@@ -202,9 +202,7 @@ export function buildArgs(
  * @param value - The value to inspect.
  * @returns The inferred flag kind.
  */
-function inferKind(
-  value: unknown,
-): "boolean" | "string" | "number" | "string[]" | "number[]" {
+function inferKind(value: unknown): "boolean" | "string" | "number" | "string[]" | "number[]" {
   if (typeof value === "boolean") return "boolean";
   if (typeof value === "number") return "number";
   if (Array.isArray(value)) {
