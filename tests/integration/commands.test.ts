@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it } from "vitest";
+
 import hugo, { execWithOutput } from "../../src/hugo";
 
 describe("Hugo Commands Integration", () => {

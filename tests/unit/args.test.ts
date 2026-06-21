@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+
 import { buildArgs } from "../../src/lib/args";
 
 describe("buildArgs", () => {
@@ -88,9 +89,7 @@ describe("buildArgs", () => {
       }, []);
 
       expect(themeIndices).toHaveLength(3);
-      expect(args[themeIndices[0] + 1]).toBe("a");
-      expect(args[themeIndices[1] + 1]).toBe("b");
-      expect(args[themeIndices[2] + 1]).toBe("c");
+      expect(themeIndices.map((index) => args[index + 1])).toEqual(["a", "b", "c"]);
     });
   });
 

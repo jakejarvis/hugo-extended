@@ -8,7 +8,7 @@
 
 ## Features
 
-- 🚀 **Zero configuration** — Hugo binary is automatically downloaded on install
+- 🚀 **Zero configuration** — Hugo binary is provided by a platform-specific optional package
 - 📦 **Version-locked** — Package version matches Hugo version (e.g., `hugo-extended@0.140.0` = Hugo v0.140.0)
 - 🔒 **Type-safe API** — Full TypeScript support with autocomplete for all Hugo commands and flags
 - ⚡ **Multiple APIs** — Use CLI, function-based, or builder-style APIs
@@ -40,7 +40,7 @@ These integrate seamlessly with Hugo's [built-in PostCSS pipes](https://gohugo.i
 
 The simplest way — just run `hugo` commands directly:
 
-```jsonc
+```json
 // package.json
 {
   "scripts": {
@@ -184,77 +184,63 @@ await hugo.server({ port: 3000 });
 
 All Hugo commands are fully typed with autocomplete:
 
-| Command | Builder Method | Description |
-|---------|---------------|-------------|
-| `build` | `hugo.build()` | Build your site |
-| `server` | `hugo.server()` | Start dev server |
-| `new` | `hugo.new()` | Create new content |
-| `mod get` | `hugo.mod.get()` | Download modules |
-| `mod tidy` | `hugo.mod.tidy()` | Clean go.mod/go.sum |
-| `mod clean` | `hugo.mod.clean()` | Clean module cache |
-| `mod vendor` | `hugo.mod.vendor()` | Vendor dependencies |
-| `list all` | `hugo.list.all()` | List all content |
-| `list drafts` | `hugo.list.drafts()` | List draft content |
-| `config` | `hugo.config()` | Print configuration |
-| `version` | `hugo.version()` | Print version |
-| `env` | `hugo.env()` | Print environment |
-| ... | ... | [All Hugo commands supported](https://gohugo.io/commands/) |
+| Command       | Builder Method       | Description                                                |
+| ------------- | -------------------- | ---------------------------------------------------------- |
+| `build`       | `hugo.build()`       | Build your site                                            |
+| `server`      | `hugo.server()`      | Start dev server                                           |
+| `new`         | `hugo.new()`         | Create new content                                         |
+| `mod get`     | `hugo.mod.get()`     | Download modules                                           |
+| `mod tidy`    | `hugo.mod.tidy()`    | Clean go.mod/go.sum                                        |
+| `mod clean`   | `hugo.mod.clean()`   | Clean module cache                                         |
+| `mod vendor`  | `hugo.mod.vendor()`  | Vendor dependencies                                        |
+| `list all`    | `hugo.list.all()`    | List all content                                           |
+| `list drafts` | `hugo.list.drafts()` | List draft content                                         |
+| `config`      | `hugo.config()`      | Print configuration                                        |
+| `version`     | `hugo.version()`     | Print version                                              |
+| `env`         | `hugo.env()`         | Print environment                                          |
+| ...           | ...                  | [All Hugo commands supported](https://gohugo.io/commands/) |
 
 ## Platform Support
 
 Hugo Extended is automatically used on supported platforms:
 
-| Platform | Architecture | Hugo Extended |
-|----------|-------------|---------------|
-| macOS | x64, ARM64 | ✅ |
-| Linux | x64, ARM64 | ✅ |
-| Windows | x64 | ✅ |
-| Windows | ARM64 | ❌ (vanilla Hugo) |
-| FreeBSD | x64 | ❌ (vanilla Hugo) |
+| Platform | Architecture | Hugo Extended     |
+| -------- | ------------ | ----------------- |
+| macOS    | x64, ARM64   | ✅                |
+| Linux    | x64, ARM64   | ✅                |
+| Windows  | x64          | ✅                |
+| Windows  | ARM64        | ❌ (vanilla Hugo) |
 
 ## Environment Variables
 
-Customize installation and runtime behavior with these environment variables:
+Customize runtime binary resolution with this environment variable:
 
-| Variable | Description |
-|----------|-------------|
-| `HUGO_OVERRIDE_VERSION` | Install a specific Hugo version instead of the package version. Example: `HUGO_OVERRIDE_VERSION=0.139.0 npm install` |
-| `HUGO_NO_EXTENDED` | Force vanilla Hugo instead of Extended edition. Example: `HUGO_NO_EXTENDED=1 npm install` |
-| `HUGO_SKIP_DOWNLOAD` | Skip the postinstall binary download entirely. Useful for CI caching or Docker layer optimization. |
-| `HUGO_BIN_PATH` | Use a pre-existing Hugo binary instead of the bundled one. Example: `HUGO_BIN_PATH=/usr/local/bin/hugo` |
-| `HUGO_MIRROR_BASE_URL` | Download from a custom mirror instead of GitHub releases. Example: `HUGO_MIRROR_BASE_URL=https://mirror.example.com/hugo` |
-| `HUGO_SKIP_CHECKSUM` | Skip SHA-256 checksum verification. **Use with caution.** |
-| `HUGO_QUIET` | Suppress installation progress output. |
+| Variable        | Description                                                                                                         |
+| --------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `HUGO_BIN_PATH` | Use a pre-existing Hugo binary instead of the platform package binary. Example: `HUGO_BIN_PATH=/usr/local/bin/hugo` |
 
 ### Examples
 
 ```sh
-# Install a specific older version
-HUGO_OVERRIDE_VERSION=0.139.0 npm install hugo-extended
-
-# Skip download for CI caching (when binary is already cached)
-HUGO_SKIP_DOWNLOAD=1 npm ci
-
-# Use smaller vanilla Hugo (no SCSS support)
-HUGO_NO_EXTENDED=1 npm install hugo-extended
-
-# Use a corporate mirror
-HUGO_MIRROR_BASE_URL=https://internal.example.com/hugo npm install hugo-extended
+# Use a system-installed Hugo binary
+HUGO_BIN_PATH=/usr/local/bin/hugo npm run build
 ```
 
 ## Troubleshooting
 
 ### Hugo binary not found
 
-If Hugo seems to disappear (rare edge case), it will be automatically reinstalled on next use. You can also manually trigger reinstallation:
+`hugo-extended` depends on platform-specific optional packages such as `@jakejarvis/hugo-extended-linux-amd64`. If you install with optional dependencies omitted, the wrapper cannot find its bundled Hugo binary.
 
 ```sh
-npm rebuild hugo-extended
+npm install
 ```
+
+If your environment intentionally omits optional dependencies, set `HUGO_BIN_PATH` to a compatible Hugo binary.
 
 ### macOS installation
 
-As of [v0.153.0](https://github.com/gohugoio/hugo/releases/tag/v0.153.0), Hugo is distributed as a `.pkg` installer for macOS. This package extracts the binary locally using `pkgutil --expand-full`, so **no sudo or global installation is required**. The Hugo binary stays in `node_modules` just like on other platforms.
+As of [v0.153.0](https://github.com/gohugoio/hugo/releases/tag/v0.153.0), Hugo is distributed as a `.pkg` installer for macOS. The macOS binary package is built from that `.pkg` during release packaging, so **no sudo, global installation, or install-time script is required** for consumers.
 
 ## License
 

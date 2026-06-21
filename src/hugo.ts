@@ -1,25 +1,23 @@
 import { spawn } from "node:child_process";
+
 import type { HugoCommand, HugoOptionsFor } from "./generated/types";
 import { buildArgs } from "./lib/args";
 import { getEnvConfig } from "./lib/env";
-import install from "./lib/install";
-import { doesBinExist, getBinPath, logger } from "./lib/utils";
+import { getPlatformPackage } from "./lib/platform";
+import { doesBinExist, getBinPath } from "./lib/utils";
 
 /**
- * Gets the path to the Hugo binary, automatically installing it if it's missing.
+ * Gets the path to the Hugo binary.
  *
- * This is the main entry point for the hugo-extended package. It checks if Hugo
- * is already installed and available, and if not, triggers an automatic installation
- * before returning the binary path.
- *
- * This handles the case where Hugo may mysteriously disappear (see issue #81),
- * ensuring the binary is always available when this function is called.
+ * This is the main entry point for the hugo-extended package. It checks for a
+ * custom HUGO_BIN_PATH first, then resolves the platform-specific optional npm
+ * package that contains the Hugo binary.
  *
  * Environment variables that affect behavior:
- * - HUGO_BIN_PATH: Use a custom binary path (skips auto-install if missing)
+ * - HUGO_BIN_PATH: Use a custom binary path
  *
  * @returns A promise that resolves with the absolute path to the Hugo binary
- * @throws {Error} If installation fails, the platform is unsupported, or custom binary is missing
+ * @throws {Error} If the platform is unsupported or the binary is missing
  *
  * @example
  * ```typescript
@@ -33,22 +31,27 @@ export const getHugoBinary = async (): Promise<string> => {
   const envConfig = getEnvConfig();
   const bin = getBinPath();
 
-  // If using a custom binary path, don't try to auto-install
   if (envConfig.binPath) {
-    if (!doesBinExist(bin)) {
-      throw new Error(`Custom Hugo binary not found at HUGO_BIN_PATH: ${bin}`);
+    if (!bin || !doesBinExist(bin)) {
+      throw new Error(`Custom Hugo binary not found at HUGO_BIN_PATH: ${envConfig.binPath}`);
     }
     return bin;
   }
 
-  // A fix for fleeting ENOENT errors, where Hugo seems to disappear. For now,
-  // just reinstall Hugo when it's missing and then continue normally like
-  // nothing happened.
-  // See: https://github.com/jakejarvis/hugo-extended/issues/81
-  if (!doesBinExist(bin)) {
-    // Hugo isn't there for some reason. Try re-installing.
-    logger.warn("Hugo is missing, reinstalling now...");
-    await install();
+  const platformPackage = getPlatformPackage();
+  if (!platformPackage) {
+    throw new Error(
+      `Unsupported platform for hugo-extended: ${process.platform}/${process.arch}. ` +
+        "Set HUGO_BIN_PATH to use a custom Hugo binary.",
+    );
+  }
+
+  if (!bin || !doesBinExist(bin)) {
+    throw new Error(
+      `Hugo binary package not found for ${process.platform}/${process.arch}. ` +
+        `Expected optional dependency ${platformPackage.packageName}. ` +
+        "Reinstall without omitting optional dependencies, or set HUGO_BIN_PATH to a custom Hugo binary.",
+    );
   }
 
   return bin;
@@ -107,11 +110,7 @@ export async function exec<C extends HugoCommand>(
     opts = positionalArgsOrOptions;
   }
 
-  const args = buildArgs(
-    command,
-    positionalArgs,
-    opts as Record<string, unknown>,
-  );
+  const args = buildArgs(command, positionalArgs, opts as Record<string, unknown>);
 
   return new Promise((resolve, reject) => {
     const child = spawn(bin, args, { stdio: "inherit" });
@@ -175,11 +174,7 @@ export async function execWithOutput<C extends HugoCommand>(
     opts = positionalArgsOrOptions;
   }
 
-  const args = buildArgs(
-    command,
-    positionalArgs,
-    opts as Record<string, unknown>,
-  );
+  const args = buildArgs(command, positionalArgs, opts as Record<string, unknown>);
 
   return new Promise((resolve, reject) => {
     const stdoutChunks: Buffer[] = [];
@@ -207,9 +202,7 @@ export async function execWithOutput<C extends HugoCommand>(
         resolve({ stdout, stderr });
       } else {
         reject(
-          new Error(
-            `Hugo command failed with exit code ${code}${stderr ? `\n${stderr}` : ""}`,
-          ),
+          new Error(`Hugo command failed with exit code ${code}${stderr ? `\n${stderr}` : ""}`),
         );
       }
     });
@@ -247,14 +240,11 @@ export const hugo = {
 
   /** Generate shell completion scripts */
   completion: {
-    bash: (options?: HugoOptionsFor<"completion bash">) =>
-      exec("completion bash", options),
-    fish: (options?: HugoOptionsFor<"completion fish">) =>
-      exec("completion fish", options),
+    bash: (options?: HugoOptionsFor<"completion bash">) => exec("completion bash", options),
+    fish: (options?: HugoOptionsFor<"completion fish">) => exec("completion fish", options),
     powershell: (options?: HugoOptionsFor<"completion powershell">) =>
       exec("completion powershell", options),
-    zsh: (options?: HugoOptionsFor<"completion zsh">) =>
-      exec("completion zsh", options),
+    zsh: (options?: HugoOptionsFor<"completion zsh">) => exec("completion zsh", options),
   },
 
   /** Print Hugo configuration */
@@ -262,12 +252,9 @@ export const hugo = {
 
   /** Convert content to different formats */
   convert: {
-    toJSON: (options?: HugoOptionsFor<"convert toJSON">) =>
-      exec("convert toJSON", options),
-    toTOML: (options?: HugoOptionsFor<"convert toTOML">) =>
-      exec("convert toTOML", options),
-    toYAML: (options?: HugoOptionsFor<"convert toYAML">) =>
-      exec("convert toYAML", options),
+    toJSON: (options?: HugoOptionsFor<"convert toJSON">) => exec("convert toJSON", options),
+    toTOML: (options?: HugoOptionsFor<"convert toTOML">) => exec("convert toTOML", options),
+    toYAML: (options?: HugoOptionsFor<"convert toYAML">) => exec("convert toYAML", options),
   },
 
   /** Print Hugo environment info */
@@ -281,48 +268,35 @@ export const hugo = {
 
   /** Import your site from others */
   import: {
-    jekyll: (options?: HugoOptionsFor<"import jekyll">) =>
-      exec("import jekyll", options),
+    jekyll: (options?: HugoOptionsFor<"import jekyll">) => exec("import jekyll", options),
   },
 
   /** List various types of content */
   list: {
     all: (options?: HugoOptionsFor<"list all">) => exec("list all", options),
-    drafts: (options?: HugoOptionsFor<"list drafts">) =>
-      exec("list drafts", options),
-    expired: (options?: HugoOptionsFor<"list expired">) =>
-      exec("list expired", options),
-    future: (options?: HugoOptionsFor<"list future">) =>
-      exec("list future", options),
-    published: (options?: HugoOptionsFor<"list published">) =>
-      exec("list published", options),
+    drafts: (options?: HugoOptionsFor<"list drafts">) => exec("list drafts", options),
+    expired: (options?: HugoOptionsFor<"list expired">) => exec("list expired", options),
+    future: (options?: HugoOptionsFor<"list future">) => exec("list future", options),
+    published: (options?: HugoOptionsFor<"list published">) => exec("list published", options),
   },
 
   /** Module operations */
   mod: {
-    clean: (options?: HugoOptionsFor<"mod clean">) =>
-      exec("mod clean", options),
+    clean: (options?: HugoOptionsFor<"mod clean">) => exec("mod clean", options),
     get: (options?: HugoOptionsFor<"mod get">) => exec("mod get", options),
-    graph: (options?: HugoOptionsFor<"mod graph">) =>
-      exec("mod graph", options),
+    graph: (options?: HugoOptionsFor<"mod graph">) => exec("mod graph", options),
     init: (options?: HugoOptionsFor<"mod init">) => exec("mod init", options),
     npm: {
-      pack: (options?: HugoOptionsFor<"mod npm pack">) =>
-        exec("mod npm pack", options),
+      pack: (options?: HugoOptionsFor<"mod npm pack">) => exec("mod npm pack", options),
     },
     tidy: (options?: HugoOptionsFor<"mod tidy">) => exec("mod tidy", options),
-    vendor: (options?: HugoOptionsFor<"mod vendor">) =>
-      exec("mod vendor", options),
-    verify: (options?: HugoOptionsFor<"mod verify">) =>
-      exec("mod verify", options),
+    vendor: (options?: HugoOptionsFor<"mod vendor">) => exec("mod vendor", options),
+    verify: (options?: HugoOptionsFor<"mod verify">) => exec("mod verify", options),
   },
 
   /** Create new content */
   new: Object.assign(
-    (
-      pathOrOptions?: string | HugoOptionsFor<"new">,
-      options?: HugoOptionsFor<"new">,
-    ) => {
+    (pathOrOptions?: string | HugoOptionsFor<"new">, options?: HugoOptionsFor<"new">) => {
       if (typeof pathOrOptions === "string") {
         return exec("new", [pathOrOptions], options);
       }

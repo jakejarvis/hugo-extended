@@ -16,12 +16,7 @@ export default defineConfig({
       provider: "v8",
       reporter: ["text", "json", "html"],
       include: ["src/**/*.ts"],
-      exclude: [
-        "src/generated/**",
-        "src/**/*.d.ts",
-        "**/*.test.ts",
-        "scripts/**",
-      ],
+      exclude: ["src/generated/**", "src/**/*.d.ts", "**/*.test.ts", "scripts/**"],
     },
 
     // Timeout for integration tests (some may be slow)

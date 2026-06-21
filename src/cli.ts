@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { spawn } from "node:child_process";
+
 import hugo from "./hugo";
 
 // Handle unexpected promise rejections
@@ -26,10 +27,7 @@ process.on("unhandledRejection", (reason) => {
       process.exitCode = code ?? undefined;
     });
   } catch (err) {
-    console.error(
-      "Failed to initialize Hugo:",
-      err instanceof Error ? err.message : err,
-    );
+    console.error("Failed to initialize Hugo:", err instanceof Error ? err.message : err);
     process.exitCode = 1;
   }
 })();

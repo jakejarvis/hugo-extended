@@ -1,6 +1,8 @@
 import { execFileSync } from "node:child_process";
 import { existsSync, lstatSync, statSync } from "node:fs";
+
 import { beforeAll, describe, expect, it } from "vitest";
+
 import hugo, { execWithOutput, getHugoBinary } from "../../src/hugo";
 import {
   getBinFilename,
@@ -11,16 +13,16 @@ import {
 } from "../../src/lib/utils";
 
 /**
- * End-to-end tests for Hugo installation.
+ * End-to-end tests for Hugo binary resolution.
  *
  * These tests verify:
- * - Binary is installed correctly for the current platform
+ * - Binary is resolved correctly for the current platform
  * - Binary has correct permissions
  * - Binary is executable and returns expected version
  * - Extended version is installed where supported
  *
- * Note: These tests use the actual installed Hugo binary and require
- * npm install/postinstall to have completed successfully.
+ * Note: These tests use the actual resolved Hugo binary. In repo CI,
+ * HUGO_BIN_PATH points at a generated platform binary package.
  */
 describe("Hugo Installation E2E", () => {
   let binaryPath: string;
@@ -48,15 +50,12 @@ describe("Hugo Installation E2E", () => {
   });
 
   describe("Binary Permissions (Unix)", () => {
-    it.skipIf(process.platform === "win32")(
-      "should have executable permissions",
-      () => {
-        const stats = statSync(binaryPath);
-        // Check that at least owner has execute permission (0o100)
-        const hasExecute = (stats.mode & 0o100) !== 0;
-        expect(hasExecute).toBe(true);
-      },
-    );
+    it.skipIf(process.platform === "win32")("should have executable permissions", () => {
+      const stats = statSync(binaryPath);
+      // Check that at least owner has execute permission (0o100)
+      const hasExecute = (stats.mode & 0o100) !== 0;
+      expect(hasExecute).toBe(true);
+    });
 
     it.skipIf(process.platform !== "darwin")(
       "should be a regular file on macOS (not a symlink)",
@@ -137,11 +136,7 @@ describe("Hugo Installation E2E", () => {
       const { stdout } = await execWithOutput("env");
 
       const expectedGoarch =
-        process.arch === "x64"
-          ? "amd64"
-          : process.arch === "arm64"
-            ? "arm64"
-            : process.arch;
+        process.arch === "x64" ? "amd64" : process.arch === "arm64" ? "arm64" : process.arch;
 
       expect(stdout).toContain(`GOARCH="${expectedGoarch}"`);
     });

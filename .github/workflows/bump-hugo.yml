@@ -66,7 +66,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           LATEST="${{ steps.hugo.outputs.version }}"
-          BRANCH_NAME="autobump-hugo-v${LATEST}"
+          BRANCH_NAME="chore/hugo-v${LATEST}"
 
           # Check if a PR for this version already exists
           EXISTING_PR=$(gh pr list --head "$BRANCH_NAME" --json number --jq '.[0].number // empty')
@@ -89,7 +89,7 @@ jobs:
         if: steps.check.outputs.needs_update == 'true' && steps.pr_check.outputs.pr_exists == 'false'
         run: |
           LATEST="${{ steps.hugo.outputs.version }}"
-          BRANCH_NAME="autobump-hugo-v${LATEST}"
+          BRANCH_NAME="chore/hugo-v${LATEST}"
 
           # Create new branch
           git checkout -b "$BRANCH_NAME"
@@ -97,6 +97,8 @@ jobs:
           # Use npm version to properly bump (updates package.json and package-lock.json)
           # --no-git-tag-version prevents creating a tag, we'll let the publish workflow handle that
           npm version "$LATEST" --no-git-tag-version
+          npm run sync-binary-package-versions
+          npm install --package-lock-only --ignore-scripts
 
           # Stage package files
           git add package.json package-lock.json
@@ -105,7 +107,7 @@ jobs:
         if: steps.check.outputs.needs_update == 'true' && steps.pr_check.outputs.pr_exists == 'false'
         run: |
           LATEST="${{ steps.hugo.outputs.version }}"
-          BRANCH_NAME="autobump-hugo-v${LATEST}"
+          BRANCH_NAME="chore/hugo-v${LATEST}"
 
           git commit -m "chore: bump to Hugo v${LATEST}"
           git push origin "$BRANCH_NAME"
@@ -116,7 +118,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           LATEST="${{ steps.hugo.outputs.version }}"
-          BRANCH_NAME="autobump-hugo-v${LATEST}"
+          BRANCH_NAME="chore/hugo-v${LATEST}"
 
           gh pr create \
             --title "chore: bump to Hugo v${LATEST}" \

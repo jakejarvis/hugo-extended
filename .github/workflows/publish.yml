@@ -10,8 +10,54 @@ permissions:
   contents: read
 
 jobs:
-  npm:
-    name: Publish to NPM
+  binary-packages:
+    name: Publish ${{ matrix.package_name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - package_name: "@jakejarvis/hugo-extended-darwin-universal"
+            os: macos-latest
+          - package_name: "@jakejarvis/hugo-extended-linux-amd64"
+            os: ubuntu-latest
+          - package_name: "@jakejarvis/hugo-extended-linux-arm64"
+            os: ubuntu-latest
+          - package_name: "@jakejarvis/hugo-extended-windows-amd64"
+            os: ubuntu-latest
+          - package_name: "@jakejarvis/hugo-windows-arm64"
+            os: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Install dependencies
+        run: npm install -g npm@latest && npm ci
+
+      - name: Generate binary package
+        env:
+          PACKAGE_NAME: ${{ matrix.package_name }}
+        run: npm run generate-binary-packages -- --package "$PACKAGE_NAME" --pack-dry-run
+
+      - name: Publish binary package
+        env:
+          PACKAGE_NAME: ${{ matrix.package_name }}
+        shell: bash
+        run: |
+          package_dir="dist-platforms/${PACKAGE_NAME#@jakejarvis/}"
+          npm publish "$package_dir" --access public
+
+  main-package:
+    name: Publish hugo-extended
+    needs: binary-packages
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -25,11 +71,11 @@ jobs:
           node-version: "24"
           registry-url: "https://registry.npmjs.org"
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-
       - name: Install dependencies
         run: npm install -g npm@latest && npm ci
+
+      - name: Generate current platform binary package
+        run: npm run generate-binary-packages -- --set-github-env
 
       - name: Generate types
         run: npm run generate-types
@@ -38,7 +84,7 @@ jobs:
         run: npm run lint
 
       - name: Type check
-        run: npm run typecheck
+        run: npm run check-types
 
       - name: Build
         run: npm run build

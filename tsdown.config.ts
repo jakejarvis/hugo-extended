@@ -4,9 +4,7 @@ export default defineConfig({
   entry: ["src/**/*.ts"],
   outDir: "dist",
   clean: true,
-  dts: {
-    resolve: true,
-  },
+  dts: true,
   unbundle: true,
   copy: ["src/generated"],
 });

@@ -2,7 +2,7 @@ node_modules/
 npm-debug.log*
 *.tsbuildinfo
 dist/
-bin/
+dist-platforms/
 src/generated/
 mysite/
 coverage/

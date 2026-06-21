@@ -1,5 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+
 import { x } from "tinyexec";
 
 import hugo from "../src/hugo";
@@ -150,10 +151,12 @@ function extractDefault(desc: string): {
   const re = /\s*\(default(?:\s+is)?\s+([^)]+)\)\s*$/i;
   const m = re.exec(desc);
   if (!m) return { cleaned: desc };
+  const defaultRaw = m[1];
+  if (defaultRaw === undefined) return { cleaned: desc };
 
   return {
     cleaned: desc.slice(0, m.index).trimEnd(),
-    defaultRaw: m[1].trim(),
+    defaultRaw: defaultRaw.trim(),
   };
 }
 
@@ -170,8 +173,10 @@ function extractEnum(desc: string): { cleaned: string; enum?: string[] } {
   const re = /\(([^()]*\|[^()]*)\)/;
   const m = re.exec(desc);
   if (!m) return { cleaned: desc };
+  const enumRaw = m[1];
+  if (enumRaw === undefined) return { cleaned: desc };
 
-  const parts = m[1]
+  const parts = enumRaw
     .split("|")
     .map((s) => s.trim())
     .filter(Boolean);
@@ -202,7 +207,10 @@ function parseFlagsFromSection(
   let last: FlagSpec | null = null;
 
   for (let i = startIdx; i < lines.length; i++) {
-    const raw = lines[i].replace(/\t/g, "    ").trimEnd();
+    const line = lines[i];
+    if (line === undefined) continue;
+
+    const raw = line.replace(/\t/g, "    ").trimEnd();
 
     // Hugo ends with a standard "Use ..." hint; treat that as a hard stop.
     if (raw.startsWith('Use "hugo ')) return { flags: out, endIdx: i };
@@ -238,7 +246,7 @@ function parseFlagsFromSection(
       const en = extractEnum(desc);
       desc = en.cleaned;
 
-      out.push({
+      const flag: FlagSpec = {
         long,
         short: m.groups.short,
         typeToken,
@@ -246,9 +254,10 @@ function parseFlagsFromSection(
         description: desc,
         defaultRaw: def.defaultRaw,
         enum: en.enum,
-      });
+      };
 
-      last = out[out.length - 1];
+      out.push(flag);
+      last = flag;
       continue;
     }
 
@@ -279,7 +288,10 @@ function parseAvailableCommands(helpText: string): string[] {
 
   const out: string[] = [];
   for (let i = idx + 1; i < lines.length; i++) {
-    const raw = lines[i].trimEnd();
+    const line = lines[i];
+    if (line === undefined) continue;
+
+    const raw = line.trimEnd();
     if (raw.trim() === "") continue;
 
     // Stop on the next section header.
@@ -342,10 +354,8 @@ function normalizeLong(long: string) {
  */
 function camelizeIfKebab(name: string) {
   if (!name.includes("-")) return name;
-  const [first, ...rest] = name.split("-");
-  return (
-    first + rest.map((p) => (p ? p[0].toUpperCase() + p.slice(1) : "")).join("")
-  );
+  const [first = "", ...rest] = name.split("-");
+  return first + rest.map((p) => (p ? p.charAt(0).toUpperCase() + p.slice(1) : "")).join("");
 }
 
 /**
@@ -355,7 +365,7 @@ function camelizeIfKebab(name: string) {
  * @returns PascalCase string (e.g. `ModGet`).
  */
 function pascal(tokens: string[]) {
-  return tokens.map((t) => (t ? t[0].toUpperCase() + t.slice(1) : "")).join("");
+  return tokens.map((t) => (t ? t.charAt(0).toUpperCase() + t.slice(1) : "")).join("");
 }
 
 /**
@@ -410,7 +420,7 @@ function emitInterfaces(globalFlags: FlagSpec[], commands: CommandSpec[]) {
   lines.push("");
 
   lines.push(`export interface HugoGlobalOptions {`);
-  for (const f of globalFlags.sort((a, b) => a.long.localeCompare(b.long))) {
+  for (const f of globalFlags.slice().sort((a, b) => a.long.localeCompare(b.long))) {
     const prop = camelizeIfKebab(normalizeLong(f.long));
     const tsType = kindToTs(f.kind, f.enum);
     const def = f.defaultRaw ? ` (default ${f.defaultRaw})` : "";
@@ -420,12 +430,12 @@ function emitInterfaces(globalFlags: FlagSpec[], commands: CommandSpec[]) {
   lines.push(`}`);
   lines.push("");
 
-  for (const cmd of commands.sort((a, b) =>
-    a.pathTokens.join(" ").localeCompare(b.pathTokens.join(" ")),
-  )) {
+  for (const cmd of commands
+    .slice()
+    .sort((a, b) => a.pathTokens.join(" ").localeCompare(b.pathTokens.join(" ")))) {
     const name = `Hugo${pascal(cmd.pathTokens)}Options`;
     lines.push(`export interface ${name} extends HugoGlobalOptions {`);
-    for (const f of cmd.flags.sort((a, b) => a.long.localeCompare(b.long))) {
+    for (const f of cmd.flags.slice().sort((a, b) => a.long.localeCompare(b.long))) {
       const prop = camelizeIfKebab(normalizeLong(f.long));
       const tsType = kindToTs(f.kind, f.enum);
       const def = f.defaultRaw ? ` (default ${f.defaultRaw})` : "";
@@ -437,9 +447,7 @@ function emitInterfaces(globalFlags: FlagSpec[], commands: CommandSpec[]) {
   }
 
   const cmdStrings = commands.map((c) => c.pathTokens.join(" "));
-  lines.push(
-    `export type HugoCommand = ${cmdStrings.map((s) => JSON.stringify(s)).join(" | ")};`,
-  );
+  lines.push(`export type HugoCommand = ${cmdStrings.map((s) => JSON.stringify(s)).join(" | ")};`);
   lines.push("");
   lines.push(`export type HugoOptionsFor<C extends HugoCommand> =`);
   for (const cmd of commands) {
