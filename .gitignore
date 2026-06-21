@@ -3,7 +3,6 @@ npm-debug.log*
 *.tsbuildinfo
 dist/
 dist-platforms/
-src/generated/
 mysite/
 coverage/
 .vitest-cache/

@@ -63,6 +63,8 @@ When bumping Hugo versions, **regenerate these files** and expect downstream cha
 - Which commands support which flags
 - Integration-test filesystem outputs (Hugo occasionally changes scaffolding)
 
+Normal test and publish CI validates the committed generated files; it does not regenerate them. The Hugo bump workflow is responsible for regenerating and staging `src/generated/types.ts` and `src/generated/flags.json`.
+
 ## Testing (concise)
 
 This repo uses **Vitest**.

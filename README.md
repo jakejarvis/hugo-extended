@@ -269,13 +269,11 @@ Integration and e2e tests run the resolved Hugo binary. In tests that operate on
 - `src/generated/types.ts`
 - `src/generated/flags.json`
 
-Run it after bumping the package/Hugo version:
+These generated files are committed source inputs. After bumping the Hugo version, run:
 
 ```sh
 npm run generate-types
 ```
-
-Expect generated type changes when Hugo adds, removes, renames, or recases commands and flags upstream.
 
 ### Generating Platform Packages
 

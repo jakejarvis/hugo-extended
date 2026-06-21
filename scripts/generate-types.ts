@@ -505,8 +505,8 @@ async function getCommandHelp(bin: string, tokens: string[]) {
 
 /**
  * Main entry point: discovers the Hugo command tree, parses flags, and emits:
- * - `src/types.ts` (types/interfaces)
- * - `src/hugo.spec.json` (runtime spec for argv building)
+ * - `src/generated/types.ts` (types/interfaces)
+ * - `src/generated/flags.json` (runtime spec for argv building)
  */
 async function run() {
   const bin = await hugo();

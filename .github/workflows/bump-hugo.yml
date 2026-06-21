@@ -130,7 +130,7 @@ jobs:
 
       - name: Stage updated files
         if: steps.check.outputs.needs_update == 'true' && steps.pr_check.outputs.pr_exists == 'false'
-        run: git add package.json package-lock.json
+        run: git add package.json package-lock.json src/generated/types.ts src/generated/flags.json
 
       - name: Commit and push
         if: steps.check.outputs.needs_update == 'true' && steps.pr_check.outputs.pr_exists == 'false'
@@ -157,8 +157,7 @@ jobs:
 
           ### Changes
           - Bumped package version to \`${LATEST}\`
-
-          Type definitions and flag specs will be regenerated automatically during CI and publish.
+          - Regenerated committed type definitions and flag specs
 
           ### Hugo Release
           📦 [Hugo v${LATEST} Release Notes](https://github.com/gohugoio/hugo/releases/tag/v${LATEST})

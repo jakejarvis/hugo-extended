@@ -61,8 +61,7 @@
     "test:unit": "vitest run tests/unit",
     "test:integration": "vitest run tests/integration",
     "test:e2e": "vitest run tests/e2e",
-    "test:coverage": "vitest run --coverage",
-    "prepublishOnly": "npm run generate-types && npm run build"
+    "test:coverage": "vitest run --coverage"
   },
   "devDependencies": {
     "@types/adm-zip": "^0.5.8",
