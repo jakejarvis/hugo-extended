@@ -144,19 +144,19 @@ jobs:
         run: |
           case "${RUNNER_OS}-${RUNNER_ARCH}" in
             Linux-X64)
-              package_dir="dist-platforms/hugo-extended-linux-amd64"
+              package_dir="./dist-platforms/hugo-extended-linux-amd64"
               ;;
             Linux-ARM64)
-              package_dir="dist-platforms/hugo-extended-linux-arm64"
+              package_dir="./dist-platforms/hugo-extended-linux-arm64"
               ;;
             macOS-X64|macOS-ARM64)
-              package_dir="dist-platforms/hugo-extended-darwin-universal"
+              package_dir="./dist-platforms/hugo-extended-darwin-universal"
               ;;
             Windows-X64)
-              package_dir="dist-platforms/hugo-extended-windows-amd64"
+              package_dir="./dist-platforms/hugo-extended-windows-amd64"
               ;;
             Windows-ARM64)
-              package_dir="dist-platforms/hugo-windows-arm64"
+              package_dir="./dist-platforms/hugo-windows-arm64"
               ;;
             *)
               echo "::error::No binary package mapping for ${RUNNER_OS}/${RUNNER_ARCH}"
@@ -226,5 +226,11 @@ jobs:
       - name: Binary package dry run
         shell: bash
         run: |
-          package_dir=$(find dist-platforms -mindepth 1 -maxdepth 1 -type d ! -name .downloads | head -n 1)
+          package_dir="./dist-platforms/hugo-extended-linux-amd64"
+          if [[ ! -d "$package_dir" ]]; then
+            echo "::error::Expected generated binary package at $package_dir"
+            find dist-platforms -mindepth 1 -maxdepth 1 -type d -print
+            exit 1
+          fi
+
           npm pack --dry-run "$package_dir"
