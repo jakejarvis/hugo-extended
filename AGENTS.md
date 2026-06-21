@@ -85,7 +85,7 @@ npm run test:coverage    # coverage via v8
   - Example: `tests/unit/args.test.ts` covers argv building behavior driven by `flags.json`.
   - Example: `tests/unit/types.test.ts` uses `expectTypeOf` to validate type surfaces.
   - Example: `tests/unit/utils.test.ts` covers platform package detection and binary path resolution.
-  - Example: `tests/unit/binary-packages.test.ts` covers generated package manifests, checksum parsing, and archive type detection.
+  - Example: `tests/unit/platform.test.ts` covers generated package manifests, checksum parsing, and archive type detection.
 
 - `tests/integration/*`
   - Executes real Hugo commands and does real filesystem work in temp dirs.
