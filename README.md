@@ -309,8 +309,6 @@ This usually means optional dependencies were not installed. Reinstall with opti
 
 ```sh
 npm install --include=optional
-pnpm install --config.optional=true
-yarn config set ignore-optional false && yarn install
 ```
 
 If your environment intentionally omits optional dependencies, set `HUGO_BIN_PATH` instead.
