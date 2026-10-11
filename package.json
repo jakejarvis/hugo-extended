@@ -58,12 +58,12 @@
     "prepublishOnly": "npm run generate-types && npm run build"
   },
   "dependencies": {
-    "adm-zip": "^0.5.17",
+    "adm-zip": "^0.6.0",
     "tar": "^7.5.15"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.15",
-    "@types/adm-zip": "^0.5.8",
+    "@types/adm-zip": "^0.6.0",
     "@types/node": "^25.9.1",
     "@types/tar": "^6.1.13",
     "@vitest/coverage-v8": "^4.1.7",
