@@ -69,7 +69,7 @@
     "@vitest/coverage-v8": "^4.1.7",
     "tinyexec": "^1.2.2",
     "tsdown": "^0.22.0",
-    "typescript": "^6.0.3",
+    "typescript": "^7.0.0",
     "vitest": "^4.1.7"
   },
   "engines": {
